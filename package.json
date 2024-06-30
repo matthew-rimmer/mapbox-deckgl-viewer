@@ -3,7 +3,10 @@
 	"version": "1.0.0",
 	"description": "A viewer to see how models will look in mapbox combined with deckgl ",
 	"author": "joshnice",
-	"workspaces": ["./frontend"],
+	"workspaces": [
+		"./frontend",
+		"./aws"
+	],
 	"devDependencies": {
 		"@biomejs/biome": "1.8.3"
 	},
