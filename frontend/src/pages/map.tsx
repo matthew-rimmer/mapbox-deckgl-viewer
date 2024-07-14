@@ -16,6 +16,10 @@ export default function App() {
 		setShowModalUpload(false);
 	};
 
+	const handleModelAmountChanged = (amount: number) => {
+		deckglRef.current?.changeModelAmount(amount);
+	};
+
 	const renderMap = (element: HTMLDivElement) => {
 		if (mapboxRef.current == null && deckglRef.current == null) {
 			const mapbox = new Mapbox({ container: element });
@@ -28,7 +32,7 @@ export default function App() {
 	return (
 		<>
 			{showModelUpload && <ModelInputComponent onModelInput={handleModelInput} />}
-			{!showModelUpload && <ModelSettingsComponent />}
+			{!showModelUpload && <ModelSettingsComponent onAmountChange={handleModelAmountChanged} />}
 			<div ref={renderMap} className="map-container" />
 		</>
 	);
