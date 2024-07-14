@@ -15,9 +15,17 @@ export class Mapbox {
     private createMap(container: HTMLDivElement) {
         this.map = new Map({
             container: container,
-            style: "mapbox://styles/mapbox/streets-v12",
+            style: {
+                version: 8,
+                layers: [
+                    { id: "background", type: "background", paint: { "background-color": "#cccccc" } },
+                    { id: "sky", type: "sky" }
+                ],
+                sources: {}
+            },
             center: [-71.0636, 42.3603],
-            zoom: 17.41,
+            zoom: 20,
+            pitch: 60
         });
     }
 
