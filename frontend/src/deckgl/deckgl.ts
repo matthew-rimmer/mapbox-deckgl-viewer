@@ -3,6 +3,7 @@ import { ScenegraphLayer } from "deck.gl";
 import { load } from "@loaders.gl/core";
 import { GLTFLoader } from "@loaders.gl/gltf";
 import { Mapbox } from "../mapbox/mapbox";
+import { Subject } from "rxjs";
 
 export class DeckGl {
     private readonly mapbox: Mapbox;
@@ -13,8 +14,13 @@ export class DeckGl {
 
     private model: any | null = null;
 
-    constructor(options: { mapbox: Mapbox }) {
+    private testing: boolean = false;
+
+    private fpsValues: number[] = [];
+
+    constructor(options: { mapbox: Mapbox, subjects: { $testing: Subject<boolean>, $testingResults: Subject<number[]> } }) {
         this.mapbox = options.mapbox;
+        this.events(options.subjects);
     }
 
     public async addLayer(model: File) {
@@ -24,9 +30,11 @@ export class DeckGl {
         this.modelLayer = this.createModelLayer([{ coords: [0, 0] }]);
         this.mapboxOverlay = new MapboxOverlay({
             interleaved: true,
-            // _onMetrics: (metrics: { fps: number }) => {
-            //     console.log("metrics", metrics.fps);
-            // },
+            _onMetrics: (metrics: { fps: number }) => {
+                if (this.testing) {
+                    this.fpsValues.push(metrics.fps)
+                }
+            },
             layers: [
                 this.modelLayer
             ],
@@ -69,6 +77,16 @@ export class DeckGl {
             getPosition: (d: { coords: [number, number] }) => d.coords,
             getOrientation: () => [0, 0, 90],
             _lighting: "pbr",
+        });
+    }
+
+    private events(subjects: { $testing: Subject<boolean>, $testingResults: Subject<number[]> }) {
+        subjects.$testing.subscribe((value) => {
+            if (!value) {
+                subjects.$testingResults.next(this.fpsValues);
+                this.fpsValues = [];
+            }
+            this.testing = value;
         });
     }
 }

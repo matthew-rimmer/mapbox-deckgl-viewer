@@ -5,15 +5,23 @@ import { ModelInputComponent } from "../components/model-input";
 import { ModelSettingsComponent } from "../components/model-settings";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./map.css";
+import { Subject } from "rxjs";
 
 export default function App() {
 	const mapboxRef = useRef<Mapbox | null>(null);
 	const deckglRef = useRef<DeckGl | null>(null);
 	const [showModelUpload, setShowModalUpload] = useState(true);
 
+	const $testingRef = useRef(new Subject<boolean>());
+	const $testingResultsRef = useRef(new Subject<number[]>());
+
 	const handleModelInput = async (model: File) => {
 		await deckglRef.current?.addLayer(model);
 		setShowModalUpload(false);
+	};
+
+	const handleTestingClicked = () => {
+		mapboxRef.current?.startTesting();
 	};
 
 	const handleModelAmountChanged = (amount: number) => {
@@ -22,8 +30,11 @@ export default function App() {
 
 	const renderMap = (element: HTMLDivElement) => {
 		if (mapboxRef.current == null && deckglRef.current == null) {
-			const mapbox = new Mapbox({ container: element });
-			const deckgl = new DeckGl({ mapbox: mapbox });
+			const mapbox = new Mapbox({ container: element, subjects: { $testing: $testingRef.current } });
+			const deckgl = new DeckGl({
+				mapbox: mapbox,
+				subjects: { $testing: $testingRef.current, $testingResults: $testingResultsRef.current },
+			});
 			mapboxRef.current = mapbox;
 			deckglRef.current = deckgl;
 		}
@@ -32,7 +43,13 @@ export default function App() {
 	return (
 		<>
 			{showModelUpload && <ModelInputComponent onModelInput={handleModelInput} />}
-			{!showModelUpload && <ModelSettingsComponent onAmountChange={handleModelAmountChanged} />}
+			{!showModelUpload && (
+				<ModelSettingsComponent
+					$testingResults={$testingResultsRef.current}
+					onAmountChange={handleModelAmountChanged}
+					onTestingClicked={handleTestingClicked}
+				/>
+			)}
 			<div ref={renderMap} className="map-container" />
 		</>
 	);

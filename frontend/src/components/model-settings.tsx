@@ -1,11 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./model-settings.css";
+import { Subject } from "rxjs";
 
 interface ModelSettingsProps {
+	$testingResults: Subject<number[]>;
 	onAmountChange: (amount: number) => void;
+	onTestingClicked: () => void;
 }
 
-export function ModelSettingsComponent({ onAmountChange }: ModelSettingsProps) {
+export function ModelSettingsComponent({ $testingResults, onAmountChange, onTestingClicked }: ModelSettingsProps) {
+	const [results, setResults] = useState<number | null>(null);
+
+	useEffect(() => {
+		$testingResults.subscribe((results) => {
+			const sum = results.reduce((sum, val) => (sum += val), 0);
+			setResults(sum / results.length);
+		});
+	}, []);
+
 	const [amount, setAmount] = useState(1);
 
 	const onAmountChanged = (amount: number) => {
@@ -14,10 +26,26 @@ export function ModelSettingsComponent({ onAmountChange }: ModelSettingsProps) {
 		onAmountChange(parsedAmount);
 	};
 
+	const getResultsColour = () => {
+		if (results == null) {
+			return "white";
+		}
+
+		if (results > 50) {
+			return "green";
+		}
+
+		if (results > 30) {
+			return "orange";
+		}
+
+		return "red";
+	};
+
 	return (
 		<div className="model-settings">
 			<h2>Model settings</h2>
-			<div>
+			<div className="model-setting-items">
 				<div className="model-setting-item">
 					Amount
 					<input
@@ -27,6 +55,14 @@ export function ModelSettingsComponent({ onAmountChange }: ModelSettingsProps) {
 						onChange={({ target }) => onAmountChanged(Number.parseInt(target.value))}
 					/>
 				</div>
+				<div className="model-setting-item testing-button">
+					<button onClick={onTestingClicked}>Start Testing</button>
+				</div>
+				{results != null && (
+					<div className="model-setting-item" style={{ color: getResultsColour() }}>
+						Average: {results.toFixed(2)} fps
+					</div>
+				)}
 			</div>
 		</div>
 	);
