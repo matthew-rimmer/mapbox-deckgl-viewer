@@ -1,5 +1,7 @@
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { ScenegraphLayer } from "deck.gl";
+import { load } from "@loaders.gl/core";
+import { GLTFLoader } from "@loaders.gl/gltf";
 import { Mapbox } from "../mapbox/mapbox";
 
 export class DeckGl {
@@ -9,7 +11,10 @@ export class DeckGl {
         this.mapbox = options.mapbox;
     }
 
-    public addLayer() {
+    public async addLayer(model: File) {
+
+        const modelGlb = await load(model, GLTFLoader);
+
         const modelLayer = new MapboxOverlay({
             interleaved: true,
             _onMetrics: (metrics: { fps: number }) => {
@@ -19,7 +24,7 @@ export class DeckGl {
                 new ScenegraphLayer({
                     id: "model-layer",
                     type: ScenegraphLayer,
-                    scenegraph: "../public/jeep.glb",
+                    scenegraph: modelGlb,
                     getScene: (scenegraph, context) => {
                         console.log("scenegraph", scenegraph);
                         console.log("context", context);

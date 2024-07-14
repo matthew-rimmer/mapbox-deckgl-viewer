@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import Map from "./pages/map.tsx";
 import "./main.css";
+import "./font.css";
 
 const root = document.getElementById("root");
 

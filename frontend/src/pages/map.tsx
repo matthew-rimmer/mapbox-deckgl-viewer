@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Mapbox } from "../mapbox/mapbox";
 import { DeckGl } from "../deckgl/deckgl";
 import { ModelInputComponent } from "../components/model-input";
@@ -8,9 +8,11 @@ import "./map.css";
 export default function App() {
 	const mapboxRef = useRef<Mapbox | null>(null);
 	const deckglRef = useRef<DeckGl | null>(null);
+	const [showModelUpload, setShowModalUpload] = useState(true);
 
-	const handleModelInput = () => {
-		deckglRef.current?.addLayer();
+	const handleModelInput = async (model: File) => {
+		await deckglRef.current?.addLayer(model);
+		setShowModalUpload(false);
 	};
 
 	const renderMap = (element: HTMLDivElement) => {
@@ -24,7 +26,7 @@ export default function App() {
 
 	return (
 		<>
-			<ModelInputComponent onModelInput={handleModelInput} />
+			{showModelUpload && <ModelInputComponent onModelInput={handleModelInput} />}
 			<div ref={renderMap} className="map-container" />
 		</>
 	);
