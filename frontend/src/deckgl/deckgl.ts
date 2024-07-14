@@ -25,14 +25,13 @@ export class DeckGl {
                     id: "model-layer",
                     type: ScenegraphLayer,
                     scenegraph: modelGlb,
-                    getScene: (scenegraph, context) => {
-                        console.log("scenegraph", scenegraph);
-                        console.log("context", context);
+                    getScene: (scenegraph) => {
+                        // Todo: Get metrics
                         return scenegraph && scenegraph.scenes
                             ? scenegraph.scenes[0]
                             : scenegraph;
                     },
-                    data: [{ coords: [-71.0636, 42.3603] }],
+                    data: [{ coords: [0, 0] }],
                     sizeScale: 1,
                     getPosition: (d: { coords: [number, number] }) => d.coords,
                     getOrientation: () => [0, 0, 90],

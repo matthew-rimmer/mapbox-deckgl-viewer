@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Mapbox } from "../mapbox/mapbox";
 import { DeckGl } from "../deckgl/deckgl";
 import { ModelInputComponent } from "../components/model-input";
+import { ModelSettingsComponent } from "../components/model-settings";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./map.css";
 
@@ -27,6 +28,7 @@ export default function App() {
 	return (
 		<>
 			{showModelUpload && <ModelInputComponent onModelInput={handleModelInput} />}
+			{!showModelUpload && <ModelSettingsComponent />}
 			<div ref={renderMap} className="map-container" />
 		</>
 	);

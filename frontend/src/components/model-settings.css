@@ -1,0 +1,31 @@
+.model-settings {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    height: 300px;
+    width: 240px;
+    z-index: 10;
+
+    color: white;
+    font-family: Lato;
+    
+    padding: 20px;
+    background-color:#424549;
+    border-radius: 4px 0px 0px 4px;
+}
+
+.model-setting-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    font-size: 20px;
+}
+
+.amount-input {
+    width: 100px;
+}

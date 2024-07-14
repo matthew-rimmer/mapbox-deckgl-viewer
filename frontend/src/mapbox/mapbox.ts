@@ -23,7 +23,7 @@ export class Mapbox {
                 ],
                 sources: {}
             },
-            center: [-71.0636, 42.3603],
+            center: [0, 0],
             zoom: 20,
             pitch: 60
         });
