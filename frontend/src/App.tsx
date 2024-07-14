@@ -6,7 +6,7 @@ import { MapboxOverlay } from "@deck.gl/mapbox";
 import { ScenegraphLayer } from "deck.gl";
 
 // Mapbox token
-mapboxgl.accessToken = "";
+mapboxgl.accessToken = "pk.eyJ1Ijoiam9zaG5pY2U5OCIsImEiOiJjanlrMnYwd2IwOWMwM29vcnQ2aWIwamw2In0.RRsdQF3s2hQ6qK-7BH5cKg";
 
 export default function App() {
 	const map = useRef<Map | null>(null);
@@ -24,6 +24,9 @@ export default function App() {
 
 			const modelLayer = new MapboxOverlay({
 				interleaved: true,
+				_onMetrics: (metrics) => {
+					console.log("metrics", metrics);
+				},
 				layers: [
 					new ScenegraphLayer({
 						id: "model-layer",
@@ -31,6 +34,11 @@ export default function App() {
 						type: ScenegraphLayer,
 						// Path to model
 						scenegraph: "../public/jeep.glb",
+						getScene: (scenegraph, context) => {
+							console.log("scenegraph", scenegraph);
+							console.log("context", context);
+							return scenegraph && scenegraph.scenes ? scenegraph.scenes[0] : scenegraph;
+						},
 						data: [{ coords: [-71.0636, 42.3603] }],
 						sizeScale: 10,
 						getPosition: (d: { coords: [number, number] }) => d.coords,
