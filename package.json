@@ -3,6 +3,9 @@
 	"version": "1.0.0",
 	"description": "A viewer to see how models will look in mapbox combined with deckgl ",
 	"author": "joshnice",
+	"scripts": {
+		"dev": "npm run dev -w @mapbox-deckgl-viewer/frontend"
+	},
 	"workspaces": [
 		"./frontend",
 		"./aws"

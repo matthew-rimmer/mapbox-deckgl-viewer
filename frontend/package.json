@@ -1,5 +1,5 @@
 {
-	"name": "deckgl-react",
+	"name": "@mapbox-deckgl-viewer/frontend",
 	"private": true,
 	"version": "0.0.0",
 	"type": "module",
