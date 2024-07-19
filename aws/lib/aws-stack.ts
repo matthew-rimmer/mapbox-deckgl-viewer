@@ -36,7 +36,7 @@ export class MapDeckGlb extends Stack {
 
     certificate.applyRemovalPolicy(RemovalPolicy.DESTROY)
 
-    const siteBucket = new s3.Bucket(this, id, {
+    const siteBucket = new s3.Bucket(this, `${id}-bucket`, {
       bucketName: siteDomain,
       publicReadAccess: true,
       removalPolicy: RemovalPolicy.DESTROY,
