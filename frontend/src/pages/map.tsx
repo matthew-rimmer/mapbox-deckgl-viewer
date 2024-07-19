@@ -5,7 +5,8 @@ import { ModelInputComponent } from "../components/model-input";
 import { ModelSettingsComponent } from "../components/model-settings";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./map.css";
-import { Subject } from "rxjs";
+import { ReplaySubject, Subject } from "rxjs";
+import { WarningConsoleComponent } from "../components/warning-console";
 
 export default function App() {
 	const mapboxRef = useRef<Mapbox | null>(null);
@@ -14,6 +15,7 @@ export default function App() {
 
 	const $testingRef = useRef(new Subject<boolean>());
 	const $testingResultsRef = useRef(new Subject<number[]>());
+	const $deckglWarningLog = useRef(new ReplaySubject<string>());
 
 	const handleModelInput = async (model: File) => {
 		await deckglRef.current?.addLayer(model);
@@ -33,7 +35,11 @@ export default function App() {
 			const mapbox = new Mapbox({ container: element, subjects: { $testing: $testingRef.current } });
 			const deckgl = new DeckGl({
 				mapbox: mapbox,
-				subjects: { $testing: $testingRef.current, $testingResults: $testingResultsRef.current },
+				subjects: {
+					$testing: $testingRef.current,
+					$testingResults: $testingResultsRef.current,
+					$onLumaGlWarning: $deckglWarningLog.current,
+				},
 			});
 			mapboxRef.current = mapbox;
 			deckglRef.current = deckgl;
@@ -44,11 +50,14 @@ export default function App() {
 		<>
 			{showModelUpload && <ModelInputComponent onModelInput={handleModelInput} />}
 			{!showModelUpload && (
-				<ModelSettingsComponent
-					$testingResults={$testingResultsRef.current}
-					onAmountChange={handleModelAmountChanged}
-					onTestingClicked={handleTestingClicked}
-				/>
+				<>
+					<ModelSettingsComponent
+						$testingResults={$testingResultsRef.current}
+						onAmountChange={handleModelAmountChanged}
+						onTestingClicked={handleTestingClicked}
+					/>
+					<WarningConsoleComponent $deckglWarningLog={$deckglWarningLog.current} />
+				</>
 			)}
 			<div ref={renderMap} className="map-container" />
 		</>

@@ -3,7 +3,9 @@ import { ScenegraphLayer } from "deck.gl";
 import { load } from "@loaders.gl/core";
 import { GLTFLoader } from "@loaders.gl/gltf";
 import { Mapbox } from "../mapbox/mapbox";
-import { Subject } from "rxjs";
+import { ReplaySubject, Subject } from "rxjs";
+
+export type DeckGlSubjects = { $testing: Subject<boolean>, $testingResults: Subject<number[]>, $onLumaGlWarning: ReplaySubject<string> };
 
 export class DeckGl {
     private readonly mapbox: Mapbox;
@@ -18,7 +20,7 @@ export class DeckGl {
 
     private fpsValues: number[] = [];
 
-    constructor(options: { mapbox: Mapbox, subjects: { $testing: Subject<boolean>, $testingResults: Subject<number[]> } }) {
+    constructor(options: { mapbox: Mapbox, subjects: DeckGlSubjects }) {
         this.mapbox = options.mapbox;
         this.events(options.subjects);
     }
@@ -80,7 +82,7 @@ export class DeckGl {
         });
     }
 
-    private events(subjects: { $testing: Subject<boolean>, $testingResults: Subject<number[]> }) {
+    private events(subjects: DeckGlSubjects) {
         subjects.$testing.subscribe((value) => {
             if (!value) {
                 subjects.$testingResults.next(this.fpsValues);
@@ -88,5 +90,9 @@ export class DeckGl {
             }
             this.testing = value;
         });
+
+        luma.log.warn = (warning: string) => () => {
+            subjects.$onLumaGlWarning.next(warning);
+        }
     }
 }
