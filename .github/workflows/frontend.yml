@@ -1,10 +1,10 @@
-name: match
+name: frontend-build
 on:
     workflow_dispatch:
     push:
         branches:
             main
-          paths:
+        paths:
             frontend/**
 
 jobs: 
