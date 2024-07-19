@@ -1,0 +1,44 @@
+name: match
+on:
+    workflow_dispatch:
+    push:
+        branches:
+            main
+        paths:
+            match/**
+
+jobs: 
+    upload:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                aws-region: eu-west-2
+
+            - name: Setup node
+              uses: actions/setup-node@v4
+              with:
+                node-version: latest
+                cache: npm
+
+            - name: Setup folder for install
+              run: mv ./match ../build
+            
+            - name: Install dependencies
+              run: cd ../build && npm i
+
+            - name: Zip code and dependencies
+              run: cd ../build && npm run build
+            
+            - name: Sync S3 bucket 
+              run: cd ../build && aws s3 cp ./dist s3://www.mapdeckglb.com`;
+
+            - name: Invalidate cloudfront
+              run:  create-invalidation --distribution-id # Todo: Add cloudfront id 
