@@ -34,8 +34,11 @@ jobs:
             - name: Install dependencies
               run: cd ../build && npm i
 
-            - name: Zip code and dependencies
+            - name: Build code
               run: cd ../build && npm run build
             
             - name: Sync S3 bucket 
               run: aws s3 sync ../build/dist/ s3://mapdeckglb.com --delete
+
+            - name: Invalidate cloudfront
+              run:  create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_ID }}
