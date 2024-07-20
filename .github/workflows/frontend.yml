@@ -38,7 +38,7 @@ jobs:
               run: cd ../build && npm run build
             
             - name: Sync S3 bucket 
-              run: cd ../build && aws s3 cp ./dist s3://mapdeckglb.com`;
+              run: cd ../build && aws s3 cp ./dist s3://mapdeckglb.com;
 
             - name: Invalidate cloudfront
               run:  create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_ID }}
