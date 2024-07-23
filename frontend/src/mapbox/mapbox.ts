@@ -10,6 +10,8 @@ export class Mapbox {
 
     private readonly $testing: Subject<boolean>;
 
+    private readonly startPosition: { center: [number, number], zoom: number, pitch: number, bearing: number } = { center: [0, 0], zoom: 20, pitch: 60, bearing: 0 };
+
     constructor(options: { container: HTMLDivElement, subjects: { $testing: Subject<boolean> } }) {
         this.createMap(options.container);
         this.$testing = options.subjects.$testing;
@@ -26,9 +28,9 @@ export class Mapbox {
                 ],
                 sources: {}
             },
-            center: [0, 0],
-            zoom: 20,
-            pitch: 60
+            center: this.startPosition.center,
+            zoom: this.startPosition.zoom,
+            pitch: this.startPosition.pitch
         });
     }
 
@@ -41,6 +43,7 @@ export class Mapbox {
     }
 
     public async startTesting() {
+        this.map?.flyTo({ bearing: this.startPosition.bearing, center: this.startPosition.center, zoom: this.startPosition.zoom, pitch: this.startPosition.pitch, duration: 0, essential: true });
         this.$testing.next(true);
         for (let bearing = 0; bearing < 361; bearing += 10) {
             this.map?.flyTo({ bearing, duration: 300, essential: true });
