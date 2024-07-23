@@ -5,7 +5,7 @@ import { GLTFLoader } from "@loaders.gl/gltf";
 import { Mapbox } from "../mapbox/mapbox";
 import { ReplaySubject, Subject } from "rxjs";
 
-export type DeckGlSubjects = { $testing: Subject<boolean>, $testingResults: Subject<number[]>, $onLumaGlWarning: ReplaySubject<string> };
+export type DeckGlSubjects = { $testing: Subject<boolean>, $testingResults: Subject<number[]>, $onLumaGlWarning: ReplaySubject<string>, $onModelFailedToLoad: ReplaySubject<string> };
 
 export class DeckGl {
     private readonly mapbox: Mapbox;
@@ -20,14 +20,22 @@ export class DeckGl {
 
     private fpsValues: number[] = [];
 
+    private readonly $onModelFailedToLoad: ReplaySubject<string>;
+
     constructor(options: { mapbox: Mapbox, subjects: DeckGlSubjects }) {
         this.mapbox = options.mapbox;
+        this.$onModelFailedToLoad = options.subjects.$onModelFailedToLoad
         this.events(options.subjects);
     }
 
     public async addLayer(model: File) {
-
-        this.model = await load(model, GLTFLoader);
+        try {
+            this.model = await load(model, GLTFLoader);
+        } catch (err: any) {
+            if ("message" in err) {
+                this.$onModelFailedToLoad.next(err.message)
+            }
+        }
 
         this.modelLayer = this.createModelLayer([{ coords: [0, 0] }]);
         this.mapboxOverlay = new MapboxOverlay({
@@ -58,9 +66,13 @@ export class DeckGl {
             data.push({ coords: [longIncrement, latIncrement] })
         }
 
-        this.mapboxOverlay?.setProps({
-            layers: [this.createModelLayer(data)]
-        });
+        try {
+            this.mapboxOverlay?.setProps({
+                layers: [this.createModelLayer(data)]
+            });
+        } catch (err) {
+            console.log("err", err);
+        }
     }
 
     private createModelLayer(data: { coords: [number, number] }[]) {

@@ -4,20 +4,32 @@ import { useEffect, useState } from "react";
 
 interface WarningConsoleProps {
 	$deckglWarningLog: ReplaySubject<string>;
+	$deckglFailedToLoadModel: ReplaySubject<string>;
 }
 
-export function WarningConsoleComponent({ $deckglWarningLog }: WarningConsoleProps) {
-	const [messages, setMessages] = useState<string[]>([]);
+export function WarningConsoleComponent({ $deckglWarningLog, $deckglFailedToLoadModel }: WarningConsoleProps) {
+	const [messages, setMessages] = useState<{ message: string; type: "error" | "warning" }[]>([]);
 
 	useEffect(() => {
-		const sub = $deckglWarningLog.subscribe((warning) => {
+		const warningSubscription = $deckglWarningLog.subscribe((warning) => {
 			setMessages((latestMessages) =>
-				latestMessages.includes(warning) ? latestMessages : [...latestMessages, warning],
+				latestMessages.some((m) => m.message === warning)
+					? latestMessages
+					: [...latestMessages, { message: warning, type: "warning" }],
 			);
 		});
 
-		() => {
-			sub.unsubscribe();
+		const errorSubscription = $deckglFailedToLoadModel.subscribe((error) => {
+			setMessages((latestMessages) =>
+				latestMessages.some((m) => m.message === error)
+					? latestMessages
+					: [...latestMessages, { message: error, type: "error" }],
+			);
+		});
+
+		return () => {
+			warningSubscription.unsubscribe();
+			errorSubscription.unsubscribe();
 		};
 	}, []);
 
@@ -30,7 +42,10 @@ export function WarningConsoleComponent({ $deckglWarningLog }: WarningConsolePro
 			<h3>Warning and Errors</h3>
 			<ul>
 				{messages.map((message) => (
-					<ul key={message}>{message}</ul>
+					<ul key={message.message} className={message.type}>
+						<span className="type">{message.type}:</span>
+						{message.message}
+					</ul>
 				))}
 			</ul>
 		</div>
