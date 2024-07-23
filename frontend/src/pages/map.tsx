@@ -1,14 +1,15 @@
 import { useRef, useState } from "react";
+import { ReplaySubject, Subject } from "rxjs";
 import { Mapbox } from "../mapbox/mapbox";
 import { DeckGl } from "../deckgl/deckgl";
 import { ModelInputComponent } from "../components/model-input";
 import { ModelSettingsComponent } from "../components/model-settings";
+import { WarningConsoleComponent } from "../components/warning-console";
+import githubLogo from "/github.png";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./map.css";
-import { ReplaySubject, Subject } from "rxjs";
-import { WarningConsoleComponent } from "../components/warning-console";
 
-export default function App() {
+export default function Map() {
 	const mapboxRef = useRef<Mapbox | null>(null);
 	const deckglRef = useRef<DeckGl | null>(null);
 	const [showModelUpload, setShowModalUpload] = useState(true);
@@ -48,6 +49,10 @@ export default function App() {
 		}
 	};
 
+	const handleGithubClick = () => {
+		window.open("https://github.com/joshnice/mapbox-deckgl-viewer", "_blank")?.focus();
+	};
+
 	return (
 		<>
 			{showModelUpload && <ModelInputComponent onModelInput={handleModelInput} />}
@@ -65,6 +70,9 @@ export default function App() {
 				</>
 			)}
 			<div ref={renderMap} className="map-container" />
+			<button className="github-button">
+				<img className="github-logo" onClick={handleGithubClick} src={githubLogo} alt="github logo" />
+			</button>
 		</>
 	);
 }
