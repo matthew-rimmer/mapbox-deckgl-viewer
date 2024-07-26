@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
-import { ReplaySubject, Subject } from "rxjs";
+import { Subject } from "rxjs";
 import { Mapbox } from "../mapbox/mapbox";
 import { DeckGl } from "../deckgl/deckgl";
 import { ModelInputComponent } from "../components/model-input";
 import { ModelSettingsComponent } from "../components/model-settings";
 import { WarningConsoleComponent } from "../components/warning-console";
 import githubLogo from "/github.png";
+import { ReplaySubjectReset } from "../rxjs/replay-subject-reset";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./map.css";
 
@@ -14,11 +15,14 @@ export default function Map() {
 	const deckglRef = useRef<DeckGl | null>(null);
 	const [showModelUpload, setShowModalUpload] = useState(true);
 
+	// Stats
 	const $testingRef = useRef(new Subject<boolean>());
 	const $testingResultsRef = useRef(new Subject<number[]>());
-	const $deckglWarningLog = useRef(new ReplaySubject<string>());
-	const $deckglFailedToLoadModel = useRef(new ReplaySubject<string>());
-	const $renderingSceneFinshed = useRef(new ReplaySubject<number>());
+	const $renderingSceneFinshed = useRef(new ReplaySubjectReset<number>());
+
+	// Logs and Warnings
+	const $deckglWarningLog = useRef(new ReplaySubjectReset<string>());
+	const $deckglFailedToLoadModel = useRef(new ReplaySubjectReset<string>());
 
 	const handleModelInput = async (model: File) => {
 		await deckglRef.current?.addLayer(model);
@@ -29,8 +33,21 @@ export default function Map() {
 		mapboxRef.current?.startTesting();
 	};
 
+	const handleResetModelClicked = () => {
+		deckglRef.current?.removeLayer();
+
+		$deckglWarningLog.current.reset();
+		$deckglFailedToLoadModel.current.reset();
+
+		setShowModalUpload(true);
+	};
+
 	const handleModelAmountChanged = (amount: number) => {
 		deckglRef.current?.changeModelAmount(amount);
+	};
+
+	const handleGithubClick = () => {
+		window.open("https://github.com/joshnice/mapbox-deckgl-viewer", "_blank")?.focus();
 	};
 
 	const renderMap = (element: HTMLDivElement) => {
@@ -51,10 +68,6 @@ export default function Map() {
 		}
 	};
 
-	const handleGithubClick = () => {
-		window.open("https://github.com/joshnice/mapbox-deckgl-viewer", "_blank")?.focus();
-	};
-
 	return (
 		<>
 			{showModelUpload && <ModelInputComponent onModelInput={handleModelInput} />}
@@ -65,6 +78,7 @@ export default function Map() {
 						$testingResults={$testingResultsRef.current}
 						onAmountChange={handleModelAmountChanged}
 						onTestingClicked={handleTestingClicked}
+						onChangeModelClick={handleResetModelClicked}
 					/>
 					<WarningConsoleComponent
 						$deckglWarningLog={$deckglWarningLog.current}

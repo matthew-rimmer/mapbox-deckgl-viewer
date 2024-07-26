@@ -1,10 +1,10 @@
-import { ReplaySubject } from "rxjs";
 import "./warning-console.css";
 import { useEffect, useState } from "react";
+import { ReplaySubjectReset } from "../rxjs/replay-subject-reset";
 
 interface WarningConsoleProps {
-	$deckglWarningLog: ReplaySubject<string>;
-	$deckglFailedToLoadModel: ReplaySubject<string>;
+	$deckglWarningLog: ReplaySubjectReset<string>;
+	$deckglFailedToLoadModel: ReplaySubjectReset<string>;
 }
 
 export function WarningConsoleComponent({ $deckglWarningLog, $deckglFailedToLoadModel }: WarningConsoleProps) {

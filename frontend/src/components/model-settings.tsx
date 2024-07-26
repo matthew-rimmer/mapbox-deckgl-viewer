@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import "./model-settings.css";
-import { ReplaySubject, Subject } from "rxjs";
+import { Subject } from "rxjs";
+import { ReplaySubjectReset } from "../rxjs/replay-subject-reset";
 
 interface ModelSettingsProps {
 	$testingResults: Subject<number[]>;
-	$renderingSceneFinshed: ReplaySubject<number>;
+	$renderingSceneFinshed: ReplaySubjectReset<number>;
 	onAmountChange: (amount: number) => void;
 	onTestingClicked: () => void;
+	onChangeModelClick: () => void;
 }
 
 export function ModelSettingsComponent({
@@ -14,6 +16,7 @@ export function ModelSettingsComponent({
 	$renderingSceneFinshed,
 	onAmountChange,
 	onTestingClicked,
+	onChangeModelClick,
 }: ModelSettingsProps) {
 	const [results, setResults] = useState<number | null>(null);
 	const [renderingTime, setRenderingTime] = useState<number | null>(null);
@@ -79,7 +82,7 @@ export function ModelSettingsComponent({
 			<h2>Model settings</h2>
 			<div className="model-setting-items">
 				<div className={`model-setting-item ${getRenderingTimeClassName()}`}>
-					Rendering Time: <span>{renderingTime?.toFixed(2)} secs</span>
+					Rendering Time: <span>{renderingTime ? `${renderingTime.toFixed(2)} secs` : "No result"} </span>
 				</div>
 				<div className={`model-setting-item ${getPerformanceClassName()}`}>
 					Performance: <span>{results ? `${results.toFixed(2)} fps` : "No result"}</span>
@@ -95,6 +98,7 @@ export function ModelSettingsComponent({
 				</div>
 				<div className="model-setting-item testing-button">
 					<button onClick={onTestingClicked}>Start Testing</button>
+					<button onClick={onChangeModelClick}>Change Model</button>
 				</div>
 			</div>
 		</div>

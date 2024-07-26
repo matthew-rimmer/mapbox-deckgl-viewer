@@ -3,9 +3,10 @@ import { ScenegraphLayer } from "deck.gl";
 import { load } from "@loaders.gl/core";
 import { GLTFLoader } from "@loaders.gl/gltf";
 import { Mapbox } from "../mapbox/mapbox";
-import { ReplaySubject, Subject } from "rxjs";
+import { Subject } from "rxjs";
+import { ReplaySubjectReset } from "../rxjs/replay-subject-reset";
 
-export type DeckGlSubjects = { $testing: Subject<boolean>, $testingResults: Subject<number[]>, $onLumaGlWarning: ReplaySubject<string>, $onModelFailedToLoad: ReplaySubject<string>, $renderingSceneFinshed: ReplaySubject<number> };
+export type DeckGlSubjects = { $testing: Subject<boolean>, $testingResults: Subject<number[]>, $onLumaGlWarning: ReplaySubjectReset<string>, $onModelFailedToLoad: ReplaySubjectReset<string>, $renderingSceneFinshed: ReplaySubjectReset<number> };
 
 export class DeckGl {
     private readonly mapbox: Mapbox;
@@ -20,9 +21,9 @@ export class DeckGl {
 
     private fpsValues: number[] = [];
 
-    private readonly $onModelFailedToLoad: ReplaySubject<string>;
+    private readonly $onModelFailedToLoad: ReplaySubjectReset<string>;
 
-    private readonly $renderingSceneFinshed: ReplaySubject<number>;
+    private readonly $renderingSceneFinshed: ReplaySubjectReset<number>;
 
     private startLoadingModel: number = 0;
 
@@ -34,14 +35,22 @@ export class DeckGl {
     }
 
     public async addLayer(model: File) {
+        let error = false;
         this.startLoadingModel = performance.now();
         try {
             this.model = await load(model, GLTFLoader);
         } catch (err: any) {
+            error = true;
             if ("message" in err) {
-                this.$onModelFailedToLoad.next(err.message)
+                this.$onModelFailedToLoad.next(err.message);
             }
         }
+
+        if (error) {
+            return;
+        }
+
+        console.log(this.model);
 
         this.modelLayer = this.createModelLayer([{ coords: [0, 0] }]);
         this.mapboxOverlay = new MapboxOverlay({
@@ -57,6 +66,21 @@ export class DeckGl {
         });
 
         this.mapbox.getMap().addControl(this.mapboxOverlay);
+
+    }
+
+    public removeLayer() {
+        if (this.mapboxOverlay != null) {
+
+            this.mapboxOverlay.setProps({
+                layers: []
+            });
+
+            this.mapboxOverlay.finalize();
+
+            this.mapbox.getMap().removeControl(this.mapboxOverlay);
+        }
+
     }
 
     public changeModelAmount(amount: number) {
@@ -90,7 +114,6 @@ export class DeckGl {
                 const finishRenderingScene = performance.now();
                 const totalRenderingTimeSecs = (finishRenderingScene - this.startLoadingModel) / 1000;
                 this.$renderingSceneFinshed.next(totalRenderingTimeSecs);
-                // Todo: Get metrics
                 return scenegraph && scenegraph.scenes
                     ? scenegraph.scenes[0]
                     : scenegraph;
