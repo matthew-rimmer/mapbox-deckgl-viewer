@@ -18,6 +18,7 @@ export default function Map() {
 	const $testingResultsRef = useRef(new Subject<number[]>());
 	const $deckglWarningLog = useRef(new ReplaySubject<string>());
 	const $deckglFailedToLoadModel = useRef(new ReplaySubject<string>());
+	const $renderingSceneFinshed = useRef(new ReplaySubject<number>());
 
 	const handleModelInput = async (model: File) => {
 		await deckglRef.current?.addLayer(model);
@@ -42,6 +43,7 @@ export default function Map() {
 					$testingResults: $testingResultsRef.current,
 					$onLumaGlWarning: $deckglWarningLog.current,
 					$onModelFailedToLoad: $deckglFailedToLoadModel.current,
+					$renderingSceneFinshed: $renderingSceneFinshed.current,
 				},
 			});
 			mapboxRef.current = mapbox;
@@ -59,6 +61,7 @@ export default function Map() {
 			{!showModelUpload && (
 				<>
 					<ModelSettingsComponent
+						$renderingSceneFinshed={$renderingSceneFinshed.current}
 						$testingResults={$testingResultsRef.current}
 						onAmountChange={handleModelAmountChanged}
 						onTestingClicked={handleTestingClicked}

@@ -5,7 +5,7 @@ import { GLTFLoader } from "@loaders.gl/gltf";
 import { Mapbox } from "../mapbox/mapbox";
 import { ReplaySubject, Subject } from "rxjs";
 
-export type DeckGlSubjects = { $testing: Subject<boolean>, $testingResults: Subject<number[]>, $onLumaGlWarning: ReplaySubject<string>, $onModelFailedToLoad: ReplaySubject<string> };
+export type DeckGlSubjects = { $testing: Subject<boolean>, $testingResults: Subject<number[]>, $onLumaGlWarning: ReplaySubject<string>, $onModelFailedToLoad: ReplaySubject<string>, $renderingSceneFinshed: ReplaySubject<number> };
 
 export class DeckGl {
     private readonly mapbox: Mapbox;
@@ -22,13 +22,19 @@ export class DeckGl {
 
     private readonly $onModelFailedToLoad: ReplaySubject<string>;
 
+    private readonly $renderingSceneFinshed: ReplaySubject<number>;
+
+    private startLoadingModel: number = 0;
+
     constructor(options: { mapbox: Mapbox, subjects: DeckGlSubjects }) {
         this.mapbox = options.mapbox;
         this.$onModelFailedToLoad = options.subjects.$onModelFailedToLoad
+        this.$renderingSceneFinshed = options.subjects.$renderingSceneFinshed;
         this.events(options.subjects);
     }
 
     public async addLayer(model: File) {
+        this.startLoadingModel = performance.now();
         try {
             this.model = await load(model, GLTFLoader);
         } catch (err: any) {
@@ -81,6 +87,9 @@ export class DeckGl {
             type: ScenegraphLayer,
             scenegraph: this.model,
             getScene: (scenegraph) => {
+                const finishRenderingScene = performance.now();
+                const totalRenderingTimeSecs = (finishRenderingScene - this.startLoadingModel) / 1000;
+                this.$renderingSceneFinshed.next(totalRenderingTimeSecs);
                 // Todo: Get metrics
                 return scenegraph && scenegraph.scenes
                     ? scenegraph.scenes[0]
