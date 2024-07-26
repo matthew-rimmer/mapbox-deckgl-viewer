@@ -25,7 +25,6 @@ export function ModelSettingsComponent({
 		});
 
 		const renderingSceneFinshedSub = $renderingSceneFinshed.subscribe((result) => {
-			console.log("result", result);
 			setRenderingTime(result);
 		});
 
@@ -43,42 +42,48 @@ export function ModelSettingsComponent({
 		onAmountChange(parsedAmount);
 	};
 
-	const getResultsColour = () => {
+	const getPerformanceClassName = () => {
 		if (results == null) {
-			return "white";
+			return "none";
 		}
 
 		if (results > 50) {
-			return "green";
+			return "good";
 		}
 
 		if (results > 30) {
-			return "orange";
+			return "ok";
 		}
 
-		return "red";
+		return "bad";
 	};
 
-	const getRenderingTimeColour = () => {
+	const getRenderingTimeClassName = () => {
 		if (renderingTime == null) {
-			return "white";
+			return "none";
 		}
 
 		if (renderingTime < 0.5) {
-			return "green";
+			return "good";
 		}
 
 		if (renderingTime < 1) {
-			return "orange";
+			return "ok";
 		}
 
-		return "red";
+		return "bad";
 	};
 
 	return (
 		<div className="model-settings">
 			<h2>Model settings</h2>
 			<div className="model-setting-items">
+				<div className={`model-setting-item ${getRenderingTimeClassName()}`}>
+					Rendering Time: <span>{renderingTime?.toFixed(2)} secs</span>
+				</div>
+				<div className={`model-setting-item ${getPerformanceClassName()}`}>
+					Performance: <span>{results ? `${results.toFixed(2)} fps` : "No result"}</span>
+				</div>
 				<div className="model-setting-item">
 					Amount
 					<input
@@ -91,16 +96,6 @@ export function ModelSettingsComponent({
 				<div className="model-setting-item testing-button">
 					<button onClick={onTestingClicked}>Start Testing</button>
 				</div>
-				{results != null && (
-					<div className="model-setting-item" style={{ color: getResultsColour() }}>
-						Average: {results.toFixed(2)} fps
-					</div>
-				)}
-				{renderingTime != null && (
-					<div className="model-setting-item" style={{ color: getRenderingTimeColour() }}>
-						Rendering Time: {renderingTime.toFixed(2)} secs
-					</div>
-				)}
 			</div>
 		</div>
 	);

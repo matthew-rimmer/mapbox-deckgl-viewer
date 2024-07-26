@@ -77,7 +77,7 @@ export class DeckGl {
                 layers: [this.createModelLayer(data)]
             });
         } catch (err) {
-            console.log("err", err);
+            console.error("err", err);
         }
     }
 
