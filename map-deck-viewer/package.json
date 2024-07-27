@@ -1,0 +1,27 @@
+{
+	"name": "@joshnice/map-deck-viewer",
+	"description": "A mapbox and deckgl intergration which allows for glb models to be viewed",
+	"version": "0.0.1",
+	"private": false,
+	"author": "joshnice",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"scripts": {
+		"build": "tsc"
+	},
+	"dependencies": {
+		"@deck.gl/mapbox": "^9.0.7",
+		"deck.gl": "^9.0.7",
+		"mapbox-gl": "^3.3.0",
+		"rxjs": "^7.8.1",
+		"uuid": "^9.0.1"
+	},
+	"devDependencies": {
+		"@types/mapbox-gl": "^3.1.0",
+		"@types/node": "^20.14.12",
+		"@types/uuid": "^9.0.8",
+		"@vitejs/plugin-react-swc": "^3.5.0",
+		"typescript": "^5.2.2"
+	}
+}
