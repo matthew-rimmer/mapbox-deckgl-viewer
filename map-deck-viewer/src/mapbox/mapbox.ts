@@ -1,7 +1,5 @@
-import mapboxgl, { Map } from "mapbox-gl";
+import { Map } from "mapbox-gl";
 import { Subject } from "rxjs";
-
-// Mapbox token
 
 export class Mapbox {
 

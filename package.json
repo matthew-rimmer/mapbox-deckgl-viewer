@@ -3,8 +3,7 @@
 	"description": "A viewer to see how models will look in mapbox combined with deckgl ",
 	"author": "joshnice",
 	"scripts": {
-		"dev": "npm run dev -w @joshnice/webdeckglb",
-		"build-map-deck-viewer": "npm run build -w @joshnice/map-deck-viewer"
+		"dev": "npm run dev -w @joshnice/webdeckglb-site"
 	},
 	"workspaces": [
 		"./frontend",
