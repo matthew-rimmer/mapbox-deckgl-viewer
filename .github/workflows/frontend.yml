@@ -32,8 +32,11 @@ jobs:
             - name: Install dependencies
               run: npm i
 
-            - name: Build code
-              run: npm run build -ws
+            - name: Build map deck viewer
+              run: npm run build -w @joshnice/map-deck-viewer
+
+            - name: Build webdeckglb site
+              run: npm run build -w @joshnice/webdeckglb-site
             
             - name: Sync S3 bucket 
               run: aws s3 sync ../frontend/dist/ s3://mapdeckglb.com --delete
