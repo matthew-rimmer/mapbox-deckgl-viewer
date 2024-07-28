@@ -6,6 +6,7 @@ on:
             main
         paths:
             frontend/**
+            map-deck-viewer/**
 
 jobs: 
     upload:
@@ -28,17 +29,14 @@ jobs:
                 node-version: latest
                 cache: npm
 
-            - name: Setup folder for install
-              run: mv ./frontend ../build
-            
             - name: Install dependencies
-              run: cd ../build && npm i
+              run: npm i
 
             - name: Build code
-              run: cd ../build && npm run build
+              run: npm run build -ws
             
             - name: Sync S3 bucket 
-              run: aws s3 sync ../build/dist/ s3://mapdeckglb.com --delete
+              run: aws s3 sync ../frontend/dist/ s3://mapdeckglb.com --delete
 
             - name: Invalidate cloudfront
               run: aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_ID }} --paths '/*'
