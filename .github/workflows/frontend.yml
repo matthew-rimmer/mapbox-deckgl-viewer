@@ -39,7 +39,7 @@ jobs:
               run: npm run build -w @joshnice/webdeckglb-site
             
             - name: Sync S3 bucket 
-              run: aws s3 sync ../frontend/dist/ s3://mapdeckglb.com --delete
+              run: aws s3 sync ./frontend/dist/ s3://mapdeckglb.com --delete
 
             - name: Invalidate cloudfront
               run: aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_ID }} --paths '/*'
