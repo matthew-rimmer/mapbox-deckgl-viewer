@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { Subject } from "rxjs";
-import { Mapbox } from "../mapbox/mapbox";
-import { DeckGl } from "../deckgl/deckgl";
+import { MapDeckView } from "@joshnice/map-deck-viewer";
 import { ModelInputComponent } from "../components/model-input";
 import { ModelSettingsComponent } from "../components/model-settings";
 import { WarningConsoleComponent } from "../components/warning-console";
@@ -10,9 +9,11 @@ import { ReplaySubjectReset } from "../rxjs/replay-subject-reset";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./map.css";
 
+const MAPBOX_ACCESS_TOKEN =
+	"pk.eyJ1Ijoiam9zaG5pY2U5OCIsImEiOiJjanlrMnYwd2IwOWMwM29vcnQ2aWIwamw2In0.RRsdQF3s2hQ6qK-7BH5cKg";
+
 export default function Map() {
-	const mapboxRef = useRef<Mapbox | null>(null);
-	const deckglRef = useRef<DeckGl | null>(null);
+	const viewer = useRef<MapDeckView | null>(null);
 	const [showModelUpload, setShowModalUpload] = useState(true);
 
 	// Stats
@@ -25,16 +26,16 @@ export default function Map() {
 	const $deckglFailedToLoadModel = useRef(new ReplaySubjectReset<string>());
 
 	const handleModelInput = async (model: File) => {
-		await deckglRef.current?.addLayer(model);
+		await viewer.current?.addModel(model);
 		setShowModalUpload(false);
 	};
 
 	const handleTestingClicked = () => {
-		mapboxRef.current?.startTesting();
+		viewer.current?.startTesting();
 	};
 
 	const handleResetModelClicked = () => {
-		deckglRef.current?.removeLayer();
+		viewer.current?.removeModel();
 
 		$deckglWarningLog.current.reset();
 		$deckglFailedToLoadModel.current.reset();
@@ -43,7 +44,7 @@ export default function Map() {
 	};
 
 	const handleModelAmountChanged = (amount: number) => {
-		deckglRef.current?.changeModelAmount(amount);
+		viewer.current?.changeModelAmount(amount);
 	};
 
 	const handleGithubClick = () => {
@@ -51,10 +52,10 @@ export default function Map() {
 	};
 
 	const renderMap = (element: HTMLDivElement) => {
-		if (mapboxRef.current == null && deckglRef.current == null) {
-			const mapbox = new Mapbox({ container: element, subjects: { $testing: $testingRef.current } });
-			const deckgl = new DeckGl({
-				mapbox: mapbox,
+		if (viewer.current == null) {
+			viewer.current = new MapDeckView({
+				mapElement: element,
+				mapboxAccessKey: MAPBOX_ACCESS_TOKEN,
 				subjects: {
 					$testing: $testingRef.current,
 					$testingResults: $testingResultsRef.current,
@@ -63,8 +64,6 @@ export default function Map() {
 					$renderingSceneFinshed: $renderingSceneFinshed.current,
 				},
 			});
-			mapboxRef.current = mapbox;
-			deckglRef.current = deckgl;
 		}
 	};
 

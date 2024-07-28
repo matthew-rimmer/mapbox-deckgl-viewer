@@ -1,10 +1,11 @@
 import { ReplaySubject as _ReplaySubject } from "rxjs";
 
-export class ReplaySubjectReset<T> {
+export class ReplaySubjectReset<T> extends _ReplaySubject<T> {
 
     private subject: _ReplaySubject<T>;
 
     constructor() {
+        super();
         this.subject = new _ReplaySubject<T>;
     }
 

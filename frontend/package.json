@@ -1,7 +1,7 @@
 {
-	"name": "@mapbox-deckgl-viewer/frontend",
+	"name": "@joshnice/webdeckglb",
 	"private": true,
-	"version": "0.0.0",
+	"version": "0.0.2",
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
@@ -10,16 +10,13 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
-		"@deck.gl/mapbox": "^9.0.7",
-		"deck.gl": "^9.0.7",
-		"mapbox-gl": "^3.3.0",
+		"@joshnice/map-deck-viewer": "@joshnice/map-deck-viewer",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",
 		"rxjs": "^7.8.1",
 		"uuid": "^9.0.1"
 	},
 	"devDependencies": {
-		"@types/mapbox-gl": "^3.1.0",
 		"@types/react": "^18.2.66",
 		"@types/react-dom": "^18.2.22",
 		"@types/uuid": "^9.0.8",
