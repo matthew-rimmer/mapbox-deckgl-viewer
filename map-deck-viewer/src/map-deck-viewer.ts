@@ -30,8 +30,8 @@ export class MapDeckView {
         this.deckgl = new DeckGl({ mapbox: this.mapbox, subjects: subjects });
     }
 
-    public addModel(model: File) {
-        this.deckgl.addLayer(model)
+    public async addModel(model: File) {
+        await this.deckgl.addLayer(model)
     }
 
     public removeModel() {
@@ -40,6 +40,10 @@ export class MapDeckView {
 
     public startTesting() {
         this.mapbox.startTesting();
+    }
+
+    public changeModelAmount(amount: number) {
+        this.deckgl.changeModelAmount(amount);
     }
 
     private verifySubjects(subjects: MapDeckViewOptions["subjects"] = {}) {
