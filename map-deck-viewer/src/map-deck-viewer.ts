@@ -4,56 +4,53 @@ import { Mapbox } from "./mapbox/mapbox";
 import type { MapDeckViewOptions } from "./types/map-deck-viewer-types";
 import { DeckGl } from "./deckgl/deckgl";
 
-
 export class MapDeckView {
+	private readonly mapbox: Mapbox;
 
-    private readonly mapbox: Mapbox;
+	private readonly deckgl: DeckGl;
 
-    private readonly deckgl: DeckGl;
+	constructor(options: MapDeckViewOptions) {
+		if (options.mapboxAccessKey == null) {
+			throw new Error("Mapbox access key needs to be present");
+		}
 
-    constructor(options: MapDeckViewOptions) {
+		mapboxgl.accessToken = options.mapboxAccessKey;
 
-        if (options.mapboxAccessKey == null) {
-            throw new Error("Mapbox access key needs to be present");
-        }
+		if (options.mapElement == null) {
+			throw new Error("Map element needs to be present");
+		}
 
-        mapboxgl.accessToken = options.mapboxAccessKey;
+		const subjects = this.verifySubjects(options.subjects);
 
-        if (options.mapElement == null) {
-            throw new Error("Map element needs to be present");
-        }
+		this.mapbox = new Mapbox({ container: options.mapElement, subjects });
 
-        const subjects = this.verifySubjects(options.subjects);
+		this.deckgl = new DeckGl({ mapbox: this.mapbox, subjects: subjects });
+	}
 
-        this.mapbox = new Mapbox({ container: options.mapElement, subjects });
+	public async addModel(model: File) {
+		await this.deckgl.addLayer(model);
+	}
 
-        this.deckgl = new DeckGl({ mapbox: this.mapbox, subjects: subjects });
-    }
+	public removeModel() {
+		this.deckgl.removeLayer();
+	}
 
-    public async addModel(model: File) {
-        await this.deckgl.addLayer(model)
-    }
+	public startTesting() {
+		this.mapbox.startTesting();
+	}
 
-    public removeModel() {
-        this.deckgl.removeLayer();
-    }
+	public changeModelAmount(amount: number) {
+		this.deckgl.changeModelAmount(amount);
+	}
 
-    public startTesting() {
-        this.mapbox.startTesting();
-    }
-
-    public changeModelAmount(amount: number) {
-        this.deckgl.changeModelAmount(amount);
-    }
-
-    private verifySubjects(subjects: MapDeckViewOptions["subjects"] = {}) {
-        const { $onLumaGlWarning, $onModelFailedToLoad, $renderingSceneFinshed, $testing, $testingResults } = subjects;
-        return {
-            $onLumaGlWarning: $onLumaGlWarning ?? new ReplaySubject<string>(),
-            $onModelFailedToLoad: $onModelFailedToLoad ?? new ReplaySubject<string>(),
-            $renderingSceneFinshed: $renderingSceneFinshed ?? new ReplaySubject<number>(),
-            $testing: $testing ?? new Subject<boolean>(),
-            $testingResults: $testingResults ?? new Subject<number[]>()
-        };
-    }
+	private verifySubjects(subjects: MapDeckViewOptions["subjects"] = {}) {
+		const { $onLumaGlWarning, $onModelFailedToLoad, $renderingSceneFinshed, $testing, $testingResults } = subjects;
+		return {
+			$onLumaGlWarning: $onLumaGlWarning ?? new ReplaySubject<string>(),
+			$onModelFailedToLoad: $onModelFailedToLoad ?? new ReplaySubject<string>(),
+			$renderingSceneFinshed: $renderingSceneFinshed ?? new ReplaySubject<number>(),
+			$testing: $testing ?? new Subject<boolean>(),
+			$testingResults: $testingResults ?? new Subject<number[]>(),
+		};
+	}
 }

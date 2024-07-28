@@ -1,3 +1,3 @@
 import type { Subject } from "rxjs";
 
-export type MapboxSubjects = { $testing: Subject<boolean> }
+export type MapboxSubjects = { $testing: Subject<boolean> };
