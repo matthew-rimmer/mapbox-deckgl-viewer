@@ -17,5 +17,6 @@
 		"tsBuildInfoFile": null,
 		"lib": ["es2022", "dom", "dom.iterable"]
 	},
-	"exclude": ["./dist/**/*"]
+	"exclude": ["./dist/**/*"],
+	"include": ["src/**/*.ts"]
 }
