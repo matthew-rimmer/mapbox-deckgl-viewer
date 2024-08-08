@@ -32,7 +32,9 @@ export class Mapbox {
 			center: this.startPosition.center,
 			zoom: this.startPosition.zoom,
 			pitch: this.startPosition.pitch,
+			interactive: false,
 		});
+		this.enableInteraction();
 	}
 
 	public getMap() {
@@ -44,6 +46,7 @@ export class Mapbox {
 	}
 
 	public async startTesting() {
+		this.disableInteraction();
 		this.map?.flyTo({
 			bearing: this.startPosition.bearing,
 			center: this.startPosition.center,
@@ -62,5 +65,21 @@ export class Mapbox {
 			});
 		}
 		this.$testing.next(false);
+		this.enableInteraction();
+	}
+
+	private enableInteraction() {
+		this.map?.dragPan.enable();
+		this.map?.dragRotate.enable();
+		this.map?.scrollZoom.enable();
+		this.map?.keyboard.enable();
+
+	}
+
+	private disableInteraction() {
+		this.map?.dragPan.disable();
+		this.map?.dragRotate.disable();
+		this.map?.scrollZoom.disable();
+		this.map?.keyboard.disable();
 	}
 }

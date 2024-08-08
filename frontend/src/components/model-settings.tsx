@@ -21,6 +21,9 @@ export function ModelSettingsComponent({
 	const [results, setResults] = useState<number | null>(null);
 	const [renderingTime, setRenderingTime] = useState<number | null>(null);
 
+	const [testing, setTesting] = useState(false);
+	const [amount, setAmount] = useState(1);
+
 	useEffect(() => {
 		const testingResultsSub = $testingResults.subscribe((results) => {
 			const sum = results.reduce((sum, val) => (sum += val), 0);
@@ -37,12 +40,15 @@ export function ModelSettingsComponent({
 		};
 	}, []);
 
-	const [amount, setAmount] = useState(1);
-
-	const onAmountChanged = (amount: number) => {
+	const handleAmountChanged = (amount: number) => {
 		const parsedAmount = Number.isNaN(amount) ? 0 : amount;
 		setAmount(parsedAmount);
 		onAmountChange(parsedAmount);
+	};
+
+	const handleTestingClicked = () => {
+		setTesting(true);
+		onTestingClicked();
 	};
 
 	const getPerformanceClassName = () => {
@@ -93,12 +99,16 @@ export function ModelSettingsComponent({
 						className="amount-input"
 						type="number"
 						value={amount ?? 0}
-						onChange={({ target }) => onAmountChanged(Number.parseInt(target.value))}
+						onChange={({ target }) => handleAmountChanged(Number.parseInt(target.value))}
 					/>
 				</div>
 				<div className="model-setting-item testing-button">
-					<button onClick={onTestingClicked}>Start Testing</button>
-					<button onClick={onChangeModelClick}>Change Model</button>
+					<button disabled={testing} onClick={handleTestingClicked}>
+						Start Testing
+					</button>
+					<button disabled={testing} onClick={onChangeModelClick}>
+						Change Model
+					</button>
 				</div>
 			</div>
 		</div>
