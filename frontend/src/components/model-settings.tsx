@@ -31,6 +31,7 @@ export function ModelSettingsComponent({
 	useEffect(() => {
 		const testingResultSub = $testingResult.subscribe((result) => {
 			setResults(result);
+			setTesting(false);
 		});
 
 		const renderingSceneFinshedSub = $renderingSceneFinshed.subscribe((result) => {
