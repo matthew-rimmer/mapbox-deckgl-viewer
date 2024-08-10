@@ -3,7 +3,7 @@ import { ScenegraphLayer } from "deck.gl";
 import { load } from "@loaders.gl/core";
 import { GLTFLoader } from "@loaders.gl/gltf";
 import { Mapbox } from "../mapbox/mapbox";
-import type { DeckGlSubjects } from "../types/deckgl-types";
+import type { DeckGlSubjects, Stats } from "../types/deckgl-types";
 
 export class DeckGl {
 	private readonly mapbox: Mapbox;
@@ -22,12 +22,17 @@ export class DeckGl {
 
 	private readonly $renderingSceneFinshed: DeckGlSubjects["$renderingSceneFinshed"];
 
+	private readonly $onModelStatsFinished: DeckGlSubjects["$onModelStatsFinished"];
+
 	private startLoadingModel: number = 0;
+
+	private stats: Stats | null = null;
 
 	constructor(options: { mapbox: Mapbox; subjects: DeckGlSubjects }) {
 		this.mapbox = options.mapbox;
 		this.$onModelFailedToLoad = options.subjects.$onModelFailedToLoad;
 		this.$renderingSceneFinshed = options.subjects.$renderingSceneFinshed;
+		this.$onModelStatsFinished = options.subjects.$onModelStatsFinished;
 		this.events(options.subjects);
 	}
 
@@ -47,8 +52,7 @@ export class DeckGl {
 			return;
 		}
 
-		console.log(this.model);
-
+		this.getStats(model.name);
 		this.modelLayer = this.createModelLayer([{ coords: [0, 0] }]);
 		this.mapboxOverlay = new MapboxOverlay({
 			interleaved: true,
@@ -72,6 +76,8 @@ export class DeckGl {
 			this.mapboxOverlay.finalize();
 
 			this.mapbox.getMap().removeControl(this.mapboxOverlay);
+
+			this.stats = null;
 		}
 	}
 
@@ -119,7 +125,12 @@ export class DeckGl {
 	private events(subjects: DeckGlSubjects) {
 		subjects.$testing.subscribe((value) => {
 			if (!value) {
-				subjects.$testingResults.next(this.fpsValues);
+				const sum = this.fpsValues.reduce((sum, val) => (sum += val), 0);
+				const result = sum / this.fpsValues.length;
+				subjects.$testingResult.next(result);
+				if (this.stats != null) {
+					this.stats.fps = result;
+				}
 				this.fpsValues = [];
 			}
 			this.testing = value;
@@ -128,5 +139,17 @@ export class DeckGl {
 		luma.log.warn = (warning: string) => () => {
 			subjects.$onLumaGlWarning.next(warning);
 		};
+	}
+
+	private getStats(modelName: string) {
+		this.stats = {
+			name: modelName.split(".glb")[0] ?? "	",
+			sizeMb: Number.parseFloat((this.model.buffers[0].byteLength / 1048576).toFixed(2)),
+			accessor: this.model.json.accessors.length,
+			material: this.model.json.materials.length,
+			mesh: this.model.json.meshes.length,
+			nodes: this.model.json.nodes.length,
+		}
+		this.$onModelStatsFinished.next(this.stats);
 	}
 }

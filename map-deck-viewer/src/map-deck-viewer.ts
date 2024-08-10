@@ -3,6 +3,7 @@ import { ReplaySubject, Subject } from "rxjs";
 import { Mapbox } from "./mapbox/mapbox";
 import type { MapDeckViewOptions } from "./types/map-deck-viewer-types";
 import { DeckGl } from "./deckgl/deckgl";
+import type { Stats } from "./types/deckgl-types";
 
 export class MapDeckView {
 	private readonly mapbox: Mapbox;
@@ -44,13 +45,14 @@ export class MapDeckView {
 	}
 
 	private verifySubjects(subjects: MapDeckViewOptions["subjects"] = {}) {
-		const { $onLumaGlWarning, $onModelFailedToLoad, $renderingSceneFinshed, $testing, $testingResults } = subjects;
+		const { $onLumaGlWarning, $onModelFailedToLoad, $renderingSceneFinshed, $testing, $testingResult, $onModelStatsFinished } = subjects;
 		return {
 			$onLumaGlWarning: $onLumaGlWarning ?? new ReplaySubject<string>(),
 			$onModelFailedToLoad: $onModelFailedToLoad ?? new ReplaySubject<string>(),
 			$renderingSceneFinshed: $renderingSceneFinshed ?? new ReplaySubject<number>(),
 			$testing: $testing ?? new Subject<boolean>(),
-			$testingResults: $testingResults ?? new Subject<number[]>(),
+			$testingResult: $testingResult ?? new Subject<number>(),
+			$onModelStatsFinished: $onModelStatsFinished ?? new ReplaySubject<Stats>()
 		};
 	}
 }

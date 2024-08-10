@@ -7,7 +7,7 @@
     flex-direction: column;
     gap: 25px;
 
-    height: 300px;
+    height: fit-content;
     width: 260px;
     z-index: 10;
 
@@ -56,4 +56,18 @@
 
 .bad {
     color: #FF2400;
+}
+
+.model-stats {
+    display: flex;
+    flex-direction: column;
+}
+
+.model-stat {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }

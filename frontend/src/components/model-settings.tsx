@@ -1,42 +1,50 @@
 import { useEffect, useState } from "react";
-import "./model-settings.css";
-import { Subject } from "rxjs";
+import { ReplaySubject, Subject } from "rxjs";
+import { Stats } from "@joshnice/map-deck-viewer";
 import { ReplaySubjectReset } from "../rxjs/replay-subject-reset";
+import "./model-settings.css";
 
 interface ModelSettingsProps {
-	$testingResults: Subject<number[]>;
+	$testingResult: Subject<number>;
 	$renderingSceneFinshed: ReplaySubjectReset<number>;
+	$modelStatsFinshed: ReplaySubject<Stats>;
 	onAmountChange: (amount: number) => void;
 	onTestingClicked: () => void;
 	onChangeModelClick: () => void;
 }
 
 export function ModelSettingsComponent({
-	$testingResults,
+	$testingResult,
 	$renderingSceneFinshed,
+	$modelStatsFinshed,
 	onAmountChange,
 	onTestingClicked,
 	onChangeModelClick,
 }: ModelSettingsProps) {
 	const [results, setResults] = useState<number | null>(null);
 	const [renderingTime, setRenderingTime] = useState<number | null>(null);
+	const [stats, setStats] = useState<Stats | null>(null);
 
 	const [testing, setTesting] = useState(false);
 	const [amount, setAmount] = useState(1);
 
 	useEffect(() => {
-		const testingResultsSub = $testingResults.subscribe((results) => {
-			const sum = results.reduce((sum, val) => (sum += val), 0);
-			setResults(sum / results.length);
+		const testingResultSub = $testingResult.subscribe((result) => {
+			setResults(result);
 		});
 
 		const renderingSceneFinshedSub = $renderingSceneFinshed.subscribe((result) => {
 			setRenderingTime(result);
 		});
 
+		const modelStatsFinshedSub = $modelStatsFinshed.subscribe((stats) => {
+			setStats(stats);
+		});
+
 		return () => {
-			testingResultsSub.unsubscribe();
+			testingResultSub.unsubscribe();
 			renderingSceneFinshedSub.unsubscribe();
+			modelStatsFinshedSub.unsubscribe();
 		};
 	}, []);
 
@@ -101,6 +109,16 @@ export function ModelSettingsComponent({
 						value={amount ?? 0}
 						onChange={({ target }) => handleAmountChanged(Number.parseInt(target.value))}
 					/>
+				</div>
+				<div className="model-setting-item model-stats">
+					{stats != null &&
+						Object.entries(stats).map(([key, value]) => {
+							return (
+								<div key={key} className="model-stat">
+									<div>{key}:</div> <div>{value}</div>
+								</div>
+							);
+						})}
 				</div>
 				<div className="model-setting-item testing-button">
 					<button disabled={testing} onClick={handleTestingClicked}>

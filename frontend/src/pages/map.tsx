@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
-import { Subject } from "rxjs";
-import { MapDeckView } from "@joshnice/map-deck-viewer";
+import { ReplaySubject, Subject } from "rxjs";
+import { MapDeckView, Stats } from "@joshnice/map-deck-viewer";
 import { ModelInputComponent } from "../components/model-input";
 import { ModelSettingsComponent } from "../components/model-settings";
 import { WarningConsoleComponent } from "../components/warning-console";
@@ -18,8 +18,9 @@ export default function Map() {
 
 	// Stats
 	const $testingRef = useRef(new Subject<boolean>());
-	const $testingResultsRef = useRef(new Subject<number[]>());
-	const $renderingSceneFinshed = useRef(new ReplaySubjectReset<number>());
+	const $testingResultRef = useRef(new Subject<number>());
+	const $renderingSceneFinshedRef = useRef(new ReplaySubjectReset<number>());
+	const $modelStatsFinshedRef = useRef(new ReplaySubject<Stats>());
 
 	// Logs and Warnings
 	const $deckglWarningLog = useRef(new ReplaySubjectReset<string>());
@@ -58,10 +59,11 @@ export default function Map() {
 				mapboxAccessKey: MAPBOX_ACCESS_TOKEN,
 				subjects: {
 					$testing: $testingRef.current,
-					$testingResults: $testingResultsRef.current,
+					$testingResult: $testingResultRef.current,
 					$onLumaGlWarning: $deckglWarningLog.current,
 					$onModelFailedToLoad: $deckglFailedToLoadModel.current,
-					$renderingSceneFinshed: $renderingSceneFinshed.current,
+					$renderingSceneFinshed: $renderingSceneFinshedRef.current,
+					$onModelStatsFinished: $modelStatsFinshedRef.current,
 				},
 			});
 		}
@@ -73,8 +75,9 @@ export default function Map() {
 			{!showModelUpload && (
 				<>
 					<ModelSettingsComponent
-						$renderingSceneFinshed={$renderingSceneFinshed.current}
-						$testingResults={$testingResultsRef.current}
+						$renderingSceneFinshed={$renderingSceneFinshedRef.current}
+						$testingResult={$testingResultRef.current}
+						$modelStatsFinshed={$modelStatsFinshedRef.current}
 						onAmountChange={handleModelAmountChanged}
 						onTestingClicked={handleTestingClicked}
 						onChangeModelClick={handleResetModelClicked}

@@ -8,7 +8,8 @@ export const mapDeckViewerSubjectsNames: (keyof MapDeckViewerSubjects)[] = [
 	"$onModelFailedToLoad",
 	"$renderingSceneFinshed",
 	"$testing",
-	"$testingResults",
+	"$testingResult",
+	"$onModelStatsFinished"
 ] as const;
 
 export interface MapDeckViewOptions {
