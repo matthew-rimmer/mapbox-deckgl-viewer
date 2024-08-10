@@ -1,7 +1,7 @@
 {
 	"name": "@joshnice/map-deck-viewer",
 	"description": "A mapbox and deckgl intergration which allows for glb models to be viewed",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"private": false,
 	"author": "joshnice",
 	"type": "module",
