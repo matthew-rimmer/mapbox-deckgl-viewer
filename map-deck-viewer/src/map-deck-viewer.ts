@@ -2,13 +2,13 @@ import mapboxgl from "mapbox-gl";
 import { ReplaySubject, Subject } from "rxjs";
 import { Mapbox } from "./mapbox/mapbox";
 import type { MapDeckViewOptions } from "./types/map-deck-viewer-types";
-import { DeckGl } from "./deckgl/deckgl";
 import type { Stats } from "./types/deckgl-types";
+import { Mapbox3d } from "./mapbox/mapbox3d";
 
 export class MapDeckView {
 	private readonly mapbox: Mapbox;
 
-	private readonly deckgl: DeckGl;
+	private readonly map3d: Mapbox3d;
 
 	constructor(options: MapDeckViewOptions) {
 		if (options.mapboxAccessKey == null) {
@@ -25,15 +25,15 @@ export class MapDeckView {
 
 		this.mapbox = new Mapbox({ container: options.mapElement, subjects });
 
-		this.deckgl = new DeckGl({ mapbox: this.mapbox, subjects: subjects });
+		this.map3d = new Mapbox3d({ mapbox: this.mapbox, subjects: subjects });
 	}
 
 	public async addModel(model: File) {
-		await this.deckgl.addLayer(model);
+		await this.map3d.addLayer(model);
 	}
 
 	public removeModel() {
-		this.deckgl.removeLayer();
+		this.map3d.removeLayer();
 	}
 
 	public startTesting() {
@@ -41,7 +41,7 @@ export class MapDeckView {
 	}
 
 	public changeModelAmount(amount: number) {
-		this.deckgl.changeModelAmount(amount);
+		this.map3d.changeModelAmount(amount);
 	}
 
 	private verifySubjects(subjects: MapDeckViewOptions["subjects"] = {}) {
