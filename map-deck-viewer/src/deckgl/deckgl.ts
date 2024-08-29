@@ -65,6 +65,7 @@ export class DeckGl extends Base3d {
 			layers: [this.modelLayer],
 		});
 
+		// @ts-ignore
 		this.mapbox.getMap().addControl(this.mapboxOverlay);
 	}
 
@@ -76,6 +77,7 @@ export class DeckGl extends Base3d {
 
 			this.mapboxOverlay.finalize();
 
+			// @ts-ignore
 			this.mapbox.getMap().removeControl(this.mapboxOverlay);
 
 			this.stats = null;
