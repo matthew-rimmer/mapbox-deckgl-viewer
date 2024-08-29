@@ -1,4 +1,4 @@
-import type { GeoJSONSource, ModelLayerSpecification } from "mapbox-gl";
+import type { ModelLayerSpecification } from "mapbox-gl";
 import type { FeatureCollection, Feature, Point } from "geojson";
 import { Base3d } from "../base3d/base3d";
 
