@@ -6,6 +6,7 @@ import { Base3d } from "../base3d/base3d";
 export class Mapbox3d extends Base3d {
 
     public override addLayer(modelFile: File): Promise<void> {
+        console.log("Layer added using mapbox");
 
         const map = this.mapbox.getMap();
 

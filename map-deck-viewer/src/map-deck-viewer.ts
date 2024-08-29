@@ -1,14 +1,17 @@
 import mapboxgl from "mapbox-gl";
 import { ReplaySubject, Subject } from "rxjs";
 import { Mapbox } from "./mapbox/mapbox";
-import type { MapDeckViewOptions } from "./types/map-deck-viewer-types";
+import type { EngineType, MapDeckViewOptions, MapDeckViewerSubjects } from "./types/map-deck-viewer-types";
 import type { Stats } from "./types/deckgl-types";
 import { Mapbox3d } from "./mapbox/mapbox3d";
+import { DeckGl } from "./deckgl/deckgl";
 
 export class MapDeckView {
 	private readonly mapbox: Mapbox;
 
-	private readonly map3d: Mapbox3d;
+	private map3d: Mapbox3d | null = null;
+
+	private subjects: MapDeckViewerSubjects;
 
 	constructor(options: MapDeckViewOptions) {
 		if (options.mapboxAccessKey == null) {
@@ -21,19 +24,29 @@ export class MapDeckView {
 			throw new Error("Map element needs to be present");
 		}
 
-		const subjects = this.verifySubjects(options.subjects);
+		this.subjects = this.verifySubjects(options.subjects);
 
-		this.mapbox = new Mapbox({ container: options.mapElement, subjects });
+		this.mapbox = new Mapbox({ container: options.mapElement, subjects: this.subjects });
 
-		this.map3d = new Mapbox3d({ mapbox: this.mapbox, subjects: subjects });
+	}
+
+	public setEngine(engine: EngineType) {
+		if (engine === "deckgl") {
+			this.map3d = new DeckGl({ mapbox: this.mapbox, subjects: this.subjects });
+		}
+
+		if (engine === "mapbox") {
+			this.map3d = new Mapbox3d({ mapbox: this.mapbox, subjects: this.subjects });
+		}
+
 	}
 
 	public async addModel(model: File) {
-		await this.map3d.addLayer(model);
+		await this.map3d?.addLayer(model);
 	}
 
 	public removeModel() {
-		this.map3d.removeLayer();
+		this.map3d?.removeLayer();
 	}
 
 	public startTesting() {
@@ -41,7 +54,7 @@ export class MapDeckView {
 	}
 
 	public changeModelAmount(amount: number) {
-		this.map3d.changeModelAmount(amount);
+		this.map3d?.changeModelAmount(amount);
 	}
 
 	private verifySubjects(subjects: MapDeckViewOptions["subjects"] = {}) {

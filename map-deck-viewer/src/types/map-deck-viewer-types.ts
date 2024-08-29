@@ -17,3 +17,5 @@ export interface MapDeckViewOptions {
 	mapElement: HTMLDivElement;
 	subjects?: Partial<MapDeckViewerSubjects>;
 }
+
+export type EngineType = "mapbox" | "deckgl";

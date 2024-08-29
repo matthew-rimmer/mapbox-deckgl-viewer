@@ -8,6 +8,7 @@ interface ModelSettingsProps {
 	$testingResult: Subject<number>;
 	$renderingSceneFinshed: ReplaySubjectReset<number>;
 	$modelStatsFinshed: ReplaySubject<Stats>;
+	showStats: boolean;
 	onAmountChange: (amount: number) => void;
 	onTestingClicked: () => void;
 	onChangeModelClick: () => void;
@@ -17,6 +18,7 @@ export function ModelSettingsComponent({
 	$testingResult,
 	$renderingSceneFinshed,
 	$modelStatsFinshed,
+	showStats,
 	onAmountChange,
 	onTestingClicked,
 	onChangeModelClick,
@@ -96,12 +98,16 @@ export function ModelSettingsComponent({
 		<div className="model-settings">
 			<h2>Model settings</h2>
 			<div className="model-setting-items">
-				<div className={`model-setting-item ${getRenderingTimeClassName()}`}>
-					Rendering Time: <span>{renderingTime ? `${renderingTime.toFixed(2)} secs` : "No result"} </span>
-				</div>
-				<div className={`model-setting-item ${getPerformanceClassName()}`}>
-					Performance: <span>{results ? `${results.toFixed(2)} fps` : "No result"}</span>
-				</div>
+				{showStats && (
+					<>
+						<div className={`model-setting-item ${getRenderingTimeClassName()}`}>
+							Rendering Time: <span>{renderingTime ? `${renderingTime.toFixed(2)} secs` : "No result"} </span>
+						</div>
+						<div className={`model-setting-item ${getPerformanceClassName()}`}>
+							Performance: <span>{results ? `${results.toFixed(2)} fps` : "No result"}</span>
+						</div>
+					</>
+				)}
 				<div className="model-setting-item">
 					Amount
 					<input
@@ -111,16 +117,18 @@ export function ModelSettingsComponent({
 						onChange={({ target }) => handleAmountChanged(Number.parseInt(target.value))}
 					/>
 				</div>
-				<div className="model-setting-item model-stats">
-					{stats != null &&
-						Object.entries(stats).map(([key, value]) => {
-							return (
-								<div key={key} className="model-stat">
-									<div>{key}:</div> <div>{value}</div>
-								</div>
-							);
-						})}
-				</div>
+				{showStats && (
+					<div className="model-setting-item model-stats">
+						{stats != null &&
+							Object.entries(stats).map(([key, value]) => {
+								return (
+									<div key={key} className="model-stat">
+										<div>{key}:</div> <div>{value}</div>
+									</div>
+								);
+							})}
+					</div>
+				)}
 				<div className="model-setting-item testing-button">
 					<button disabled={testing} onClick={handleTestingClicked}>
 						Start Testing

@@ -37,6 +37,7 @@ export class DeckGl extends Base3d {
 	}
 
 	public async addLayer(model: File) {
+		console.log("Layer added using deckgl");
 		let error = false;
 		this.startLoadingModel = performance.now();
 		try {

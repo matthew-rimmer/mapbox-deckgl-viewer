@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { ReplaySubject, Subject } from "rxjs";
-import { MapDeckView, Stats } from "@joshnice/map-deck-viewer";
+import { EngineType, MapDeckView, Stats } from "@joshnice/map-deck-viewer";
 import { ModelInputComponent } from "../components/model-input";
 import { ModelSettingsComponent } from "../components/model-settings";
 import { WarningConsoleComponent } from "../components/warning-console";
@@ -15,6 +15,7 @@ const MAPBOX_ACCESS_TOKEN =
 export default function Map() {
 	const viewer = useRef<MapDeckView | null>(null);
 	const [showModelUpload, setShowModalUpload] = useState(true);
+	const [selectedEngine, setSelectedEngine] = useState<EngineType>("deckgl");
 
 	// Stats
 	const $testingRef = useRef(new Subject<boolean>());
@@ -26,7 +27,9 @@ export default function Map() {
 	const $deckglWarningLog = useRef(new ReplaySubjectReset<string>());
 	const $deckglFailedToLoadModel = useRef(new ReplaySubjectReset<string>());
 
-	const handleModelInput = async (model: File) => {
+	const handleModelInput = async (model: File, engine: EngineType) => {
+		setSelectedEngine(engine);
+		viewer.current?.setEngine(engine);
 		await viewer.current?.addModel(model);
 		setShowModalUpload(false);
 	};
@@ -78,6 +81,7 @@ export default function Map() {
 						$renderingSceneFinshed={$renderingSceneFinshedRef.current}
 						$testingResult={$testingResultRef.current}
 						$modelStatsFinshed={$modelStatsFinshedRef.current}
+						showStats={selectedEngine === "deckgl"}
 						onAmountChange={handleModelAmountChanged}
 						onTestingClicked={handleTestingClicked}
 						onChangeModelClick={handleResetModelClicked}
