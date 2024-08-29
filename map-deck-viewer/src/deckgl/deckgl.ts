@@ -4,9 +4,9 @@ import { load } from "@loaders.gl/core";
 import { GLTFLoader } from "@loaders.gl/gltf";
 import { Mapbox } from "../mapbox/mapbox";
 import type { DeckGlSubjects, Stats } from "../types/deckgl-types";
+import { Base3d } from "../base3d/base3d";
 
-export class DeckGl {
-	private readonly mapbox: Mapbox;
+export class DeckGl extends Base3d {
 
 	private modelLayer: ScenegraphLayer | null = null;
 
@@ -29,7 +29,7 @@ export class DeckGl {
 	private stats: Stats | null = null;
 
 	constructor(options: { mapbox: Mapbox; subjects: DeckGlSubjects }) {
-		this.mapbox = options.mapbox;
+		super(options);
 		this.$onModelFailedToLoad = options.subjects.$onModelFailedToLoad;
 		this.$renderingSceneFinshed = options.subjects.$renderingSceneFinshed;
 		this.$onModelStatsFinished = options.subjects.$onModelStatsFinished;
