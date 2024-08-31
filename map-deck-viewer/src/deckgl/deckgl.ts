@@ -140,6 +140,7 @@ export class DeckGl extends Base3d {
 		});
 
 		luma.log.warn = (warning: string) => () => {
+			console.warn(warning);
 			subjects.$onLumaGlWarning.next(warning);
 		};
 	}
