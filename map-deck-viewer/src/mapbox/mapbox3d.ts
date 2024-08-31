@@ -1,4 +1,3 @@
-import type { ModelLayerSpecification } from "mapbox-gl";
 import type { FeatureCollection, Feature, Point } from "geojson";
 import { Base3d } from "../base3d/base3d";
 
@@ -12,6 +11,7 @@ export class Mapbox3d extends Base3d {
 
         const objectURL = URL.createObjectURL(modelFile);
 
+        // @ts-ignore
         map.addModel("model", objectURL);
 
         const source: FeatureCollection = {
@@ -23,7 +23,7 @@ export class Mapbox3d extends Base3d {
 
         map.addSource("model-source", { type: "geojson", data: source });
 
-        const modelLayer: ModelLayerSpecification = {
+        const modelLayer = {
             id: "model-layer",
             type: "model",
             layout: {
@@ -32,6 +32,7 @@ export class Mapbox3d extends Base3d {
             source: "model-source"
         }
 
+        // @ts-ignore
         map.addLayer(modelLayer);
 
 
