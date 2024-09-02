@@ -3,7 +3,7 @@ import "./model-input.css";
 import type { EngineType } from "@joshnice/map-deck-viewer";
 
 interface ModelInputProps {
-	onModelInput: (modelPath: File, engine: EngineType) => void;
+	onModelInput: (modelPath: File, engine: EngineType, settingImage: boolean) => void;
 }
 
 export function ModelInputComponent({ onModelInput }: ModelInputProps) {
@@ -11,16 +11,19 @@ export function ModelInputComponent({ onModelInput }: ModelInputProps) {
 	const [loading, setLoading] = useState(false);
 	const [engine, setEngine] = useState<EngineType>("deckgl");
 
+	const [settingImage, setSettingImage] = useState(false);
+
 	const onFileInputted = (event: ChangeEvent<HTMLInputElement>) => {
 		setLoading(true);
 		const model = event.target.files?.[0];
 		if (model != null) {
-			onModelInput(model, engine);
+			onModelInput(model, engine, settingImage);
 		}
 	};
 
 	const onFileUploadButtonClick = () => {
 		inputRef.current?.click();
+		setSettingImage(false);
 	};
 
 	const onEngineChange = (value: string) => {
@@ -29,6 +32,12 @@ export function ModelInputComponent({ onModelInput }: ModelInputProps) {
 		}
 	};
 
+	const onFileUploadImageButtonClick = () => {
+		inputRef.current?.click();
+		setSettingImage(true);
+	};
+
+
 	return (
 		<dialog>
 			{loading && <h1>Loading model...</h1>}
@@ -36,6 +45,7 @@ export function ModelInputComponent({ onModelInput }: ModelInputProps) {
 				<>
 					<h1>Get started by pick a model</h1>
 					<button onClick={onFileUploadButtonClick}>Choose a file</button>
+					<button onClick={onFileUploadImageButtonClick}>Choose a file (replace image)</button>
 					<input ref={inputRef} type="file" accept=".glb" onChange={onFileInputted} />
 					<select value={engine} onChange={(value) => onEngineChange(value.target.value)}>
 						<option value="deckgl">Deckgl</option>

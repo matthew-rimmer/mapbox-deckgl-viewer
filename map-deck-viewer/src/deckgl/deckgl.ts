@@ -1,10 +1,17 @@
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { ScenegraphLayer } from "deck.gl";
 import { load } from "@loaders.gl/core";
-import { GLTFLoader } from "@loaders.gl/gltf";
-import { Mapbox } from "../mapbox/mapbox";
+import { GLTFLoader, type GLTFPostprocessed, postProcessGLTF } from "@loaders.gl/gltf";
+import { Mapbox } from "../ mapbox/mapbox";
 import type { DeckGlSubjects, Stats } from "../types/deckgl-types";
 import { Base3d } from "../base3d/base3d";
+import { ImageLoader } from "@loaders.gl/images";
+import { luma, Device } from "@luma.gl/core";
+import * as THREE from "three";
+import { GLTFLoader as ThreeGLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { createScenegraphsFromGLTF } from "@luma.gl/gltf";
+import { WebGLDevice } from "@luma.gl/webgl";
 
 export class DeckGl extends Base3d {
 
@@ -12,7 +19,7 @@ export class DeckGl extends Base3d {
 
 	private mapboxOverlay: MapboxOverlay | null = null;
 
-	private model: any | null = null;
+	private model: GLTFPostprocessed | null = null;
 
 	private testing: boolean = false;
 
@@ -36,12 +43,26 @@ export class DeckGl extends Base3d {
 		this.events(options.subjects);
 	}
 
-	public async addLayer(model: File) {
+	public async addLayer(model: File, image: boolean) {
+		if (image) {
+			this.addLayerWithImage(model);
+			return;
+		}
 		console.log("Layer added using deckgl");
 		let error = false;
 		this.startLoadingModel = performance.now();
 		try {
-			this.model = await load(model, GLTFLoader);
+			const rawModel = await load(model, GLTFLoader);
+			//const processed = postProcessGLTF(rawModel); 
+			const modelImage: ImageBitmap = await load("https://picsum.photos/300", ImageLoader, { image: { type: "imagebitmap", decode: true } }) as ImageBitmap;
+			rawModel.images = rawModel.images?.map((image) => {
+				return modelImage;
+			});
+			console.log("rawModel", rawModel);
+
+			const processed = postProcessGLTF(rawModel);
+
+			this.model = processed;
 		} catch (err: any) {
 			error = true;
 			if ("message" in err) {
@@ -67,6 +88,79 @@ export class DeckGl extends Base3d {
 
 		// @ts-ignore
 		this.mapbox.getMap().addControl(this.mapboxOverlay);
+	}
+
+
+	public async addLayerWithImage(model: File) {
+		// Load the model and the image we want to add to the model
+		const modelImage = await load("http://127.0.0.1:8080/farn.jpg", ImageLoader, { image: { type: "data", decode: true } });
+		this.startLoadingModel = performance.now();
+
+		// Now because lumagl is silly, we can't edit the model to make an image in there.
+		// Instead, we load the model using threejs, edit the releveant material on the model, and then export it as a gltf
+		// This can then be read back into lumagl
+
+		// Create a new scene
+		const scene = new THREE.Scene();
+
+		// Add our model to the scene
+		const loader = new ThreeGLTFLoader();
+		const gltf = await loader.loadAsync(URL.createObjectURL(model));
+		scene.add(gltf.scene);
+
+		// Add our image to the model
+		const texture = new THREE.Texture();
+		texture.image = modelImage;
+
+		// traverse the scene and find the material we want to add the image to
+		gltf.scene.traverse((child: any) => {
+			if (child instanceof THREE.Mesh) {
+				if (child.material.name.includes("adspace")) {
+					console.log("child", child.material);
+					// Compute the bounding box of the child mesh
+					child.material.map = texture;
+				}
+			}
+		});
+		const exporter = new GLTFExporter();
+		exporter.parse(scene, async (gltf: any) => {
+			let error = false;
+
+			try {
+				const blob = new Blob([JSON.stringify(gltf)], { type: "application/json" });
+				const model = new File([blob], "model.glb", { type: "application/json" });
+				const loadedModel = await load(model, GLTFLoader);
+				const processed = postProcessGLTF(loadedModel);
+
+				this.model = processed;
+				console.log("model", this.model);
+			} catch (err) {
+				console.error("err", err);
+			}
+
+			if (error) {
+				return;
+			}
+
+			this.getStats(model.name);
+			this.modelLayer = this.createModelLayer([{ coords: [0, 0] }]);
+			this.mapboxOverlay = new MapboxOverlay({
+				interleaved: true,
+				_onMetrics: (metrics: { fps: number }) => {
+					if (this.testing) {
+						this.fpsValues.push(metrics.fps);
+					}
+				},
+				layers: [this.modelLayer],
+			});
+
+			this.mapbox.getMap().addControl(this.mapboxOverlay);
+		});
+
+
+
+
+
 	}
 
 	public removeLayer() {
@@ -115,6 +209,9 @@ export class DeckGl extends Base3d {
 				const finishRenderingScene = performance.now();
 				const totalRenderingTimeSecs = (finishRenderingScene - this.startLoadingModel) / 1000;
 				this.$renderingSceneFinshed.next(totalRenderingTimeSecs);
+
+				console.log("scenegraph", scenegraph);
+
 				return scenegraph && scenegraph.scenes ? scenegraph.scenes[0] : scenegraph;
 			},
 			data,
@@ -146,13 +243,14 @@ export class DeckGl extends Base3d {
 	}
 
 	private getStats(modelName: string) {
+
 		this.stats = {
 			name: modelName.split(".glb")[0] ?? "	",
-			sizeMb: Number.parseFloat((this.model.buffers[0].byteLength / 1048576).toFixed(2)),
-			accessor: this.model.json.accessors.length,
-			material: this.model.json.materials.length,
-			mesh: this.model.json.meshes.length,
-			nodes: this.model.json.nodes.length,
+			sizeMb: Number.parseFloat((this.model?.buffers?.[0]?.byteLength ?? 0 / 1048576).toFixed(2)),
+			accessor: this.model?.accessors?.length ?? 0,
+			material: this.model?.materials?.length ?? 0,
+			mesh: this.model?.meshes?.length ?? 0,
+			nodes: this.model?.nodes?.length ?? 0,
 		}
 		this.$onModelStatsFinished.next(this.stats);
 	}
