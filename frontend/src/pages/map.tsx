@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { ReplaySubject, Subject } from "rxjs";
-import { EngineType, MapDeckView, Stats } from "@joshnice/map-deck-viewer";
+import { EngineType, MapDeckView, Orientation, Stats } from "@joshnice/map-deck-viewer";
 import { ModelInputComponent } from "../components/model-input";
 import { ModelSettingsComponent } from "../components/model-settings";
 import { WarningConsoleComponent } from "../components/warning-console";
@@ -52,6 +52,16 @@ export default function Map() {
 		viewer.current?.changeModelAmount(amount);
 	};
 
+	const handleHeightChanged = (height: number) => {
+		viewer.current?.changeModelHeight(height);
+	}
+
+	const handleOrientationChanged = (orientation: Orientation) => {
+		viewer.current?.changeModelOrientation(orientation);
+	}
+
+	
+
 	const handleGithubClick = () => {
 		window.open("https://github.com/joshnice/mapbox-deckgl-viewer", "_blank")?.focus();
 	};
@@ -84,6 +94,8 @@ export default function Map() {
 						$modelStatsFinshed={$modelStatsFinshedRef.current}
 						showStats={selectedEngine === "deckgl"}
 						onAmountChange={handleModelAmountChanged}
+						onHeightChange={handleHeightChanged}
+						onOrientationChange={handleOrientationChanged}
 						onTestingClicked={handleTestingClicked}
 						onChangeModelClick={handleResetModelClicked}
 					/>

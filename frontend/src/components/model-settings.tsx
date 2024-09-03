@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ReplaySubject, Subject } from "rxjs";
-import { Stats } from "@joshnice/map-deck-viewer";
+import { Orientation, Stats } from "@joshnice/map-deck-viewer";
 import { ReplaySubjectReset } from "../rxjs/replay-subject-reset";
 import "./model-settings.css";
 
@@ -10,6 +10,8 @@ interface ModelSettingsProps {
 	$modelStatsFinshed: ReplaySubject<Stats>;
 	showStats: boolean;
 	onAmountChange: (amount: number) => void;
+	onHeightChange: (height: number) => void;
+	onOrientationChange: (orientation: Orientation) => void;
 	onTestingClicked: () => void;
 	onChangeModelClick: () => void;
 }
@@ -20,6 +22,8 @@ export function ModelSettingsComponent({
 	$modelStatsFinshed,
 	showStats,
 	onAmountChange,
+	onHeightChange,
+	onOrientationChange,
 	onTestingClicked,
 	onChangeModelClick,
 }: ModelSettingsProps) {
@@ -116,6 +120,22 @@ export function ModelSettingsComponent({
 						value={amount ?? 0}
 						onChange={({ target }) => handleAmountChanged(Number.parseInt(target.value))}
 					/>
+				</div>
+				<div className="model-setting-item">
+					Height
+					<input
+						className="height-input"
+						type="number"
+						onChange={({ target }) => onHeightChange(Number.parseInt(target.value))}
+					/>
+				</div>
+				<div className="model-setting-item">
+					Orientation
+					<div>
+						<input type="number" onChange={({ target }) => onOrientationChange({ x: Number.parseInt(target.value) })} defaultValue={0} />
+						<input type="number" onChange={({ target }) => onOrientationChange({ y: Number.parseInt(target.value) })} defaultValue={0}/>
+						<input type="number" onChange={({ target }) => onOrientationChange({ z: Number.parseInt(target.value) })} defaultValue={90}/>
+					</div>
 				</div>
 				{showStats && (
 					<div className="model-setting-item model-stats">

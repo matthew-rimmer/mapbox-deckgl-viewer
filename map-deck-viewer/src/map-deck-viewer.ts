@@ -1,7 +1,7 @@
 import mapboxgl from "mapbox-gl";
 import { ReplaySubject, Subject } from "rxjs";
 import { Mapbox } from "./mapbox/mapbox";
-import type { EngineType, MapDeckViewOptions, MapDeckViewerSubjects } from "./types/map-deck-viewer-types";
+import type { EngineType, MapDeckViewOptions, MapDeckViewerSubjects, Orientation } from "./types/map-deck-viewer-types";
 import type { Stats } from "./types/deckgl-types";
 import { Mapbox3d } from "./mapbox/mapbox3d";
 import { DeckGl } from "./deckgl/deckgl";
@@ -56,6 +56,14 @@ export class MapDeckView {
 
 	public changeModelAmount(amount: number) {
 		this.map3d?.changeModelAmount(amount);
+	}
+
+	public changeModelHeight(height: number) {
+		this.map3d?.changeModelHeight(height);
+	}
+
+	public changeModelOrientation(orientation: Orientation) {
+		this.map3d?.changeModelOrientation(orientation);
 	}
 
 	private verifySubjects(subjects: MapDeckViewOptions["subjects"] = {}) {

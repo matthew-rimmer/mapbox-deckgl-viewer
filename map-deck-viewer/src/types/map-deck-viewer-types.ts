@@ -19,3 +19,9 @@ export interface MapDeckViewOptions {
 }
 
 export type EngineType = "mapbox" | "deckgl";
+
+export interface Orientation {
+	x?: number;
+	y?: number;
+	z?: number;
+};

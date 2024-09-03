@@ -1,5 +1,6 @@
 import { Mapbox } from "../mapbox/mapbox";
 import type { DeckGlSubjects } from "../types/deckgl-types";
+import type { Orientation } from "../types/map-deck-viewer-types";
 
 export abstract class Base3d {
     public readonly mapbox: Mapbox;
@@ -13,6 +14,10 @@ export abstract class Base3d {
     public abstract removeLayer(): void;
 
     public abstract changeModelAmount(amount: number): void;
+
+    public abstract changeModelHeight(height: number): void;
+
+    public abstract changeModelOrientation(orientation: Orientation): void;
 
     public createCoordinates(amount: number): [number, number][] {
         const data: [number, number][] = [];

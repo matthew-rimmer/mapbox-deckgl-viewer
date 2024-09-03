@@ -1,13 +1,20 @@
 import type { FeatureCollection, Feature, Point } from "geojson";
 import { Base3d } from "../base3d/base3d";
+import type { Orientation } from "../types/map-deck-viewer-types";
 
 
 export class Mapbox3d extends Base3d {
+    public override changeModelHeight(height: number): void {
+        throw new Error("Method not implemented.");
+    }
+    public override changeModelOrientation(orientation: Orientation): void {
+        throw new Error("Method not implemented.");
+    }
 
     public override addLayer(modelFile: File, image?: File): Promise<void> {
         if (image) {
             throw new Error("Image replacement not supported in Mapbox");
-        }  
+        }
         console.log("Layer added using mapbox");
 
         const map = this.mapbox.getMap();
@@ -68,5 +75,7 @@ export class Mapbox3d extends Base3d {
             source.setData(updatedData);
         }
     }
+
+
 
 }

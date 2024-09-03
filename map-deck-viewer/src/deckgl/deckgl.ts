@@ -12,6 +12,7 @@ import { GLTFLoader as ThreeGLTFLoader } from 'three/addons/loaders/GLTFLoader.j
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { createScenegraphsFromGLTF } from "@luma.gl/gltf";
 import { WebGLDevice } from "@luma.gl/webgl";
+import type { Orientation } from "../types/map-deck-viewer-types";
 
 export class DeckGl extends Base3d {
 
@@ -34,6 +35,12 @@ export class DeckGl extends Base3d {
 	private startLoadingModel: number = 0;
 
 	private stats: Stats | null = null;
+
+	private orientation: Orientation = { x: 0, y: 0, z: 90 };
+
+	private height: number = 0;
+
+	private amount: number = 1;
 
 	constructor(options: { mapbox: Mapbox; subjects: DeckGlSubjects }) {
 		super(options);
@@ -159,9 +166,9 @@ export class DeckGl extends Base3d {
 		let error = false;
 
 		try {
-			const loadedModel = await load(model, GLTFLoader);
-			const loadedImage = await load(image, ImageLoader, { image: { type: "data", decode: true } });
-			const processed = postProcessGLTF(loadedModel);
+			const rawModel = await load(model, GLTFLoader);
+			const rawImage = await load(image, ImageLoader, { image: { type: "data", decode: true } });
+			const processed = postProcessGLTF(rawModel);
 
 			console.log(processed)
 			// Next we can derive the index of the image we want to replace based on the processed model
@@ -189,21 +196,18 @@ export class DeckGl extends Base3d {
 
 			// Replace the image in the model with the new image
 			// copy the model to a new const
-			const modelCopy = loadedModel;
-			console.log(modelCopy);
-			if (modelCopy.images) {
-				modelCopy.images = modelCopy.images.map((image, index) => {
+			const editedModel = rawModel;
+			console.log(editedModel);
+			if (editedModel.images) {
+				editedModel.images = editedModel.images.map((image, index) => {
 					if (index === imageIndex) {
-						return loadedImage;
+						return rawImage;
 					}
 					return image;
 				});
 			}
 
-			const finalProcessed = postProcessGLTF(modelCopy);
-
-
-			this.model = finalProcessed;
+			this.model = postProcessGLTF(editedModel);
 			console.log("model", this.model);
 		} catch (err) {
 			console.error("err", err);
@@ -246,7 +250,19 @@ export class DeckGl extends Base3d {
 	}
 
 	public changeModelAmount(amount: number) {
-		const data: { coords: [number, number] }[] = this.createCoordinates(amount).map((coords) => ({ coords }));
+		this.amount = amount;
+
+		try {
+			this.mapboxOverlay?.setProps({
+				layers: [this.createModelLayer(this.generateCoords(this.amount), this.orientation, this.height)],
+			});
+		} catch (err) {
+			console.error("err", err);
+		}
+	}
+
+	private generateCoords = (amount: number) => {
+		const data: { coords: [number, number] }[] = [];
 		const columnsAndRows = Math.floor(Math.sqrt(amount));
 		const halfColumnAndRows = columnsAndRows / 2;
 
@@ -258,16 +274,49 @@ export class DeckGl extends Base3d {
 			data.push({ coords: [longIncrement, latIncrement] });
 		}
 
+		return data;
+	}
+
+	public changeModelOrientation(orientation: Orientation) {
+		// only update values on this.orientation if they are not null
+		if (orientation.x != null && !Number.isNaN(orientation.x)) {
+			this.orientation.x = orientation.x;
+			console.log("orientation.x", orientation.x);
+		}
+		if (orientation.y != null && !Number.isNaN(orientation.y)) {
+			this.orientation.y = orientation.y;
+			console.log("orientation.y", orientation.y);
+		}
+		if (orientation.z != null && !Number.isNaN(orientation.z)) {
+			this.orientation.z = orientation.z;
+			console.log("orientation.z", orientation.z);
+		}
+
 		try {
 			this.mapboxOverlay?.setProps({
-				layers: [this.createModelLayer(data)],
+				layers: [this.createModelLayer(this.generateCoords(this.amount), this.orientation, this.height)],
 			});
 		} catch (err) {
 			console.error("err", err);
 		}
 	}
 
-	private createModelLayer(data: { coords: [number, number] }[]) {
+	public changeModelHeight(height: number) {
+		this.height = height;
+
+		try {
+			this.mapboxOverlay?.setProps({
+				layers: [this.createModelLayer(this.generateCoords(this.amount), this.orientation, height)],
+			});
+		} catch (err) {
+			console.error("err", err);
+		}
+	}
+
+
+
+
+	private createModelLayer(data: { coords: [number, number] }[], orientation?: Orientation, height: number = 0) {
 		return new ScenegraphLayer({
 			id: "model-layer",
 			type: ScenegraphLayer,
@@ -283,8 +332,8 @@ export class DeckGl extends Base3d {
 			},
 			data,
 			sizeScale: 1,
-			getPosition: (d: { coords: [number, number] }) => d.coords,
-			getOrientation: () => [0, 0, 90],
+			getPosition: (d: { coords: [number, number] }) => [d.coords[0], d.coords[1], height],
+			getOrientation: () => [orientation?.x ?? 0, orientation?.y ?? 0, orientation?.z ?? 90],
 			_lighting: "pbr",
 		});
 	}
