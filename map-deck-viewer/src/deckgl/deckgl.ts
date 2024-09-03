@@ -43,25 +43,17 @@ export class DeckGl extends Base3d {
 		this.events(options.subjects);
 	}
 
-	public async addLayer(model: File, image: boolean) {
+	public async addLayer(model: File, image?: File) {
+		this.startLoadingModel = performance.now();
 		if (image) {
-			this.addLayerWithImage(model);
+			this.addLayerWithImageLuma(model, image);
 			return;
 		}
 		console.log("Layer added using deckgl");
 		let error = false;
-		this.startLoadingModel = performance.now();
 		try {
 			const rawModel = await load(model, GLTFLoader);
-			//const processed = postProcessGLTF(rawModel); 
-			const modelImage: ImageBitmap = await load("https://picsum.photos/300", ImageLoader, { image: { type: "imagebitmap", decode: true } }) as ImageBitmap;
-			rawModel.images = rawModel.images?.map((image) => {
-				return modelImage;
-			});
-			console.log("rawModel", rawModel);
-
 			const processed = postProcessGLTF(rawModel);
-
 			this.model = processed;
 		} catch (err: any) {
 			error = true;
@@ -91,9 +83,9 @@ export class DeckGl extends Base3d {
 	}
 
 
-	public async addLayerWithImage(model: File) {
+	private async addLayerWithImageTHREE(model: File, image: File) {
 		// Load the model and the image we want to add to the model
-		const modelImage = await load("http://127.0.0.1:8080/farn.jpg", ImageLoader, { image: { type: "data", decode: true } });
+		const modelImage = await load(image, ImageLoader, { image: { type: "data", decode: true } });
 		this.startLoadingModel = performance.now();
 
 		// Now because lumagl is silly, we can't edit the model to make an image in there.
@@ -157,11 +149,86 @@ export class DeckGl extends Base3d {
 			this.mapbox.getMap().addControl(this.mapboxOverlay);
 		});
 
+	}
+
+	private async addLayerWithImageLuma(model: File, image: File) {
+		// Load the model and the image we want to add to the model
+		const modelImage = await load(image, ImageLoader, { image: { type: "data", decode: true } });
 
 
+		let error = false;
 
+		try {
+			const loadedModel = await load(model, GLTFLoader);
+			const loadedImage = await load(image, ImageLoader, { image: { type: "data", decode: true } });
+			const processed = postProcessGLTF(loadedModel);
+
+			console.log(processed)
+			// Next we can derive the index of the image we want to replace based on the processed model
+			// Go through materials and find the texture which has a name which includes "adspace"
+			// Go to pbrMetallicRoughness -> BaseColourTexture -> Texutre -> source -> id
+			// This id is the id of the image we want to replace
+			let id = "";
+			for (const material of processed.materials) {
+				if (material.name.includes("adspace")) {
+					if (material?.pbrMetallicRoughness?.baseColorTexture) {
+						const imageId = material.pbrMetallicRoughness.baseColorTexture.texture.source?.id;
+						if (imageId) {
+							id = imageId;
+							break;
+						}
+					}
+				}
+			}
+
+			// Now find the index of the image with the id in processed.images
+			const imageIndex = processed.images.findIndex((image) => image.id === id);
+			if (imageIndex === -1) {
+				throw new Error("Image not found in model");
+			}
+
+			// Replace the image in the model with the new image
+			// copy the model to a new const
+			const modelCopy = loadedModel;
+			console.log(modelCopy);
+			if (modelCopy.images) {
+				modelCopy.images = modelCopy.images.map((image, index) => {
+					if (index === imageIndex) {
+						return loadedImage;
+					}
+					return image;
+				});
+			}
+
+			const finalProcessed = postProcessGLTF(modelCopy);
+
+
+			this.model = finalProcessed;
+			console.log("model", this.model);
+		} catch (err) {
+			console.error("err", err);
+		}
+
+		if (error) {
+			return;
+		}
+
+		this.getStats(model.name);
+		this.modelLayer = this.createModelLayer([{ coords: [0, 0] }]);
+		this.mapboxOverlay = new MapboxOverlay({
+			interleaved: true,
+			_onMetrics: (metrics: { fps: number }) => {
+				if (this.testing) {
+					this.fpsValues.push(metrics.fps);
+				}
+			},
+			layers: [this.modelLayer],
+		});
+
+		this.mapbox.getMap().addControl(this.mapboxOverlay);
 
 	}
+
 
 	public removeLayer() {
 		if (this.mapboxOverlay != null) {

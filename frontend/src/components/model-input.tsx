@@ -3,26 +3,46 @@ import "./model-input.css";
 import type { EngineType } from "@joshnice/map-deck-viewer";
 
 interface ModelInputProps {
-	onModelInput: (modelPath: File, engine: EngineType, settingImage: boolean) => void;
+	onModelInput: (modelPath: File, engine: EngineType, image?: File) => void;
 }
 
 export function ModelInputComponent({ onModelInput }: ModelInputProps) {
-	const inputRef = useRef<HTMLInputElement>(null);
+	const modelInputRef = useRef<HTMLInputElement>(null);
+	const imgInputRef = useRef<HTMLInputElement>(null);
+
+	const [model, setModel] = useState<File | null>(null);
+
 	const [loading, setLoading] = useState(false);
 	const [engine, setEngine] = useState<EngineType>("deckgl");
-
 	const [settingImage, setSettingImage] = useState(false);
 
-	const onFileInputted = (event: ChangeEvent<HTMLInputElement>) => {
-		setLoading(true);
+	const onModelInputted = (event: ChangeEvent<HTMLInputElement>) => {
 		const model = event.target.files?.[0];
 		if (model != null) {
-			onModelInput(model, engine, settingImage);
+			if (settingImage) {
+				setModel(model);
+				imgInputRef.current?.click();
+			} else {
+				setLoading(true);
+				onModelInput(model, engine);
+			}
 		}
 	};
 
+	const onImageInputted = (event: ChangeEvent<HTMLInputElement>) => {
+		const image = event.target.files?.[0];
+		if (image != null) {
+			setLoading(true);
+			onModelInput(model!, engine, image);
+		}
+		// if cancelled, reset model
+		if (image == null) {
+			setModel(null);
+		}
+	}
+
 	const onFileUploadButtonClick = () => {
-		inputRef.current?.click();
+		modelInputRef.current?.click();
 		setSettingImage(false);
 	};
 
@@ -33,7 +53,7 @@ export function ModelInputComponent({ onModelInput }: ModelInputProps) {
 	};
 
 	const onFileUploadImageButtonClick = () => {
-		inputRef.current?.click();
+		modelInputRef.current?.click();
 		setSettingImage(true);
 	};
 
@@ -46,7 +66,8 @@ export function ModelInputComponent({ onModelInput }: ModelInputProps) {
 					<h1>Get started by pick a model</h1>
 					<button onClick={onFileUploadButtonClick}>Choose a file</button>
 					<button onClick={onFileUploadImageButtonClick}>Choose a file (replace image)</button>
-					<input ref={inputRef} type="file" accept=".glb" onChange={onFileInputted} />
+					<input ref={modelInputRef} type="file" accept=".glb" onChange={onModelInputted} />
+					<input ref={imgInputRef} type="file" accept="image/*" onChange={onImageInputted} />
 					<select value={engine} onChange={(value) => onEngineChange(value.target.value)}>
 						<option value="deckgl">Deckgl</option>
 						<option value="mapbox">Mapbox</option>

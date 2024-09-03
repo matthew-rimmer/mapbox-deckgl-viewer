@@ -4,7 +4,7 @@ import { Base3d } from "../base3d/base3d";
 
 export class Mapbox3d extends Base3d {
 
-    public override addLayer(modelFile: File, image: boolean): Promise<void> {
+    public override addLayer(modelFile: File, image?: File): Promise<void> {
         if (image) {
             throw new Error("Image replacement not supported in Mapbox");
         }  

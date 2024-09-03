@@ -27,11 +27,11 @@ export default function Map() {
 	const $deckglWarningLog = useRef(new ReplaySubjectReset<string>());
 	const $deckglFailedToLoadModel = useRef(new ReplaySubjectReset<string>());
 
-	const handleModelInput = async (model: File, engine: EngineType, settingImage: boolean) => {
+	const handleModelInput = async (model: File, engine: EngineType, image?: File) => {
 		setSelectedEngine(engine);
 		viewer.current?.setEngine(engine);
 
-		await viewer.current?.addModel(model, settingImage);
+		await viewer.current?.addModel(model, image);
 		setShowModalUpload(false);
 	};
 

@@ -41,7 +41,7 @@ export class MapDeckView {
 
 	}
 
-	public async addModel(model: File, image: boolean) {
+	public async addModel(model: File, image?: File) {
 		await this.map3d?.addLayer(model, image);
 	}
 
