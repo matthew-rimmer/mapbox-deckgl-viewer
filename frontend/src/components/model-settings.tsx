@@ -103,11 +103,11 @@ export function ModelSettingsComponent({
 						<div className={`model-setting-item ${getRenderingTimeClassName()}`}>
 							Rendering Time: <span>{renderingTime ? `${renderingTime.toFixed(2)} secs` : "No result"} </span>
 						</div>
-						<div className={`model-setting-item ${getPerformanceClassName()}`}>
-							Performance: <span>{results ? `${results.toFixed(2)} fps` : "No result"}</span>
-						</div>
 					</>
 				)}
+				<div className={`model-setting-item ${getPerformanceClassName()}`}>
+					Performance: <span>{results ? `${results.toFixed(2)} fps` : "No result"}</span>
+				</div>
 				<div className="model-setting-item">
 					Amount
 					<input

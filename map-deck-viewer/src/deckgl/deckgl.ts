@@ -5,6 +5,7 @@ import { GLTFLoader } from "@loaders.gl/gltf";
 import { Mapbox } from "../mapbox/mapbox";
 import type { DeckGlSubjects, Stats } from "../types/deckgl-types";
 import { Base3d } from "../base3d/base3d";
+import { FpsCounter } from "../utils/fps";
 
 export class DeckGl extends Base3d {
 
@@ -13,10 +14,6 @@ export class DeckGl extends Base3d {
 	private mapboxOverlay: MapboxOverlay | null = null;
 
 	private model: any | null = null;
-
-	private testing: boolean = false;
-
-	private fpsValues: number[] = [];
 
 	private readonly $onModelFailedToLoad: DeckGlSubjects["$onModelFailedToLoad"];
 
@@ -27,6 +24,7 @@ export class DeckGl extends Base3d {
 	private startLoadingModel: number = 0;
 
 	private stats: Stats | null = null;
+
 
 	constructor(options: { mapbox: Mapbox; subjects: DeckGlSubjects }) {
 		super(options);
@@ -57,11 +55,6 @@ export class DeckGl extends Base3d {
 		this.modelLayer = this.createModelLayer([{ coords: [0, 0] }]);
 		this.mapboxOverlay = new MapboxOverlay({
 			interleaved: true,
-			_onMetrics: (metrics: { fps: number }) => {
-				if (this.testing) {
-					this.fpsValues.push(metrics.fps);
-				}
-			},
 			layers: [this.modelLayer],
 		});
 
@@ -126,19 +119,6 @@ export class DeckGl extends Base3d {
 	}
 
 	private events(subjects: DeckGlSubjects) {
-		subjects.$testing.subscribe((value) => {
-			if (!value) {
-				const sum = this.fpsValues.reduce((sum, val) => (sum += val), 0);
-				const result = sum / this.fpsValues.length;
-				subjects.$testingResult.next(result);
-				if (this.stats != null) {
-					this.stats.fps = result;
-				}
-				this.fpsValues = [];
-			}
-			this.testing = value;
-		});
-
 		luma.log.warn = (warning: string) => () => {
 			console.warn(warning);
 			subjects.$onLumaGlWarning.next(warning);
