@@ -5,11 +5,9 @@ import { GLTFLoader } from "@loaders.gl/gltf";
 import { Mapbox } from "../mapbox/mapbox";
 import type { DeckGlSubjects, Stats } from "../types/deckgl-types";
 import { Base3d } from "../base3d/base3d";
-import { FpsCounter } from "../utils/fps";
 
 export class DeckGl extends Base3d {
-
-	private modelLayer: ScenegraphLayer | null = null;
+	private modelLayers: ScenegraphLayer[] = [];
 
 	private mapboxOverlay: MapboxOverlay | null = null;
 
@@ -25,6 +23,7 @@ export class DeckGl extends Base3d {
 
 	private stats: Stats | null = null;
 
+	private singleModel: boolean = true;
 
 	constructor(options: { mapbox: Mapbox; subjects: DeckGlSubjects }) {
 		super(options);
@@ -34,31 +33,52 @@ export class DeckGl extends Base3d {
 		this.events(options.subjects);
 	}
 
-	public async addLayer(model: File) {
-		console.log("Layer added using deckgl");
-		let error = false;
-		this.startLoadingModel = performance.now();
-		try {
-			this.model = await load(model, GLTFLoader);
-		} catch (err: any) {
-			error = true;
-			if ("message" in err) {
-				this.$onModelFailedToLoad.next(err.message);
+	public async addLayers(models: File[]) {
+
+		this.singleModel = models.length === 1;
+
+		const coords = this.createCoordinates(models.length);
+
+		for (let i = 0; i < models.length; i++) {
+			const model = models[i];
+
+			if (model == null) {
+				throw new Error();
 			}
+
+			let error = false;
+			this.startLoadingModel = performance.now();
+			try {
+				this.model = await load(model, GLTFLoader);
+			} catch (err: any) {
+				error = true;
+				if ("message" in err) {
+					this.$onModelFailedToLoad.next(err.message);
+				}
+			}
+
+			if (error) {
+				return;
+			}
+
+			if (this.singleModel) {
+				this.getStats(model.name);
+			}
+
+			const modelCoord = coords[i];
+
+			if (modelCoord == null) {
+				throw new Error();
+			}
+
+			this.modelLayers?.push(this.createModelLayer([{ coords: modelCoord }]));
 		}
 
-		if (error) {
-			return;
-		}
-
-		this.getStats(model.name);
-		this.modelLayer = this.createModelLayer([{ coords: [0, 0] }]);
 		this.mapboxOverlay = new MapboxOverlay({
 			interleaved: true,
-			layers: [this.modelLayer],
+			layers: this.modelLayers,
 		});
 
-		// @ts-ignore
 		this.mapbox.getMap().addControl(this.mapboxOverlay);
 	}
 
@@ -70,7 +90,6 @@ export class DeckGl extends Base3d {
 
 			this.mapboxOverlay.finalize();
 
-			// @ts-ignore
 			this.mapbox.getMap().removeControl(this.mapboxOverlay);
 
 			this.stats = null;

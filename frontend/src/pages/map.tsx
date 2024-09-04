@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { ReplaySubject, Subject } from "rxjs";
-import { EngineType, MapDeckView, Stats } from "@joshnice/map-deck-viewer";
+import { EngineType, MapModelViewer, Stats } from "@joshnice/map-deck-viewer";
 import { ModelInputComponent } from "../components/model-input";
 import { ModelSettingsComponent } from "../components/model-settings";
 import { WarningConsoleComponent } from "../components/warning-console";
@@ -13,9 +13,9 @@ const MAPBOX_ACCESS_TOKEN =
 	"pk.eyJ1Ijoiam9zaG5pY2U5OCIsImEiOiJjanlrMnYwd2IwOWMwM29vcnQ2aWIwamw2In0.RRsdQF3s2hQ6qK-7BH5cKg";
 
 export default function Map() {
-	const viewer = useRef<MapDeckView | null>(null);
+	const viewer = useRef<MapModelViewer | null>(null);
 	const [showModelUpload, setShowModalUpload] = useState(true);
-	const [selectedEngine, setSelectedEngine] = useState<EngineType>("deckgl");
+	const [showStats, setShowStats] = useState(false);
 
 	// Stats
 	const $testingRef = useRef(new Subject<boolean>());
@@ -27,10 +27,10 @@ export default function Map() {
 	const $deckglWarningLog = useRef(new ReplaySubjectReset<string>());
 	const $deckglFailedToLoadModel = useRef(new ReplaySubjectReset<string>());
 
-	const handleModelInput = async (model: File, engine: EngineType) => {
-		setSelectedEngine(engine);
+	const handleModelInput = async (models: File[], engine: EngineType) => {
 		viewer.current?.setEngine(engine);
-		await viewer.current?.addModel(model);
+		setShowStats(engine === "deckgl" && models.length === 1);
+		await viewer.current?.addModels(models);
 		setShowModalUpload(false);
 	};
 
@@ -57,7 +57,7 @@ export default function Map() {
 
 	const renderMap = (element: HTMLDivElement) => {
 		if (viewer.current == null) {
-			viewer.current = new MapDeckView({
+			viewer.current = new MapModelViewer({
 				mapElement: element,
 				mapboxAccessKey: MAPBOX_ACCESS_TOKEN,
 				subjects: {
@@ -81,7 +81,7 @@ export default function Map() {
 						$renderingSceneFinshed={$renderingSceneFinshedRef.current}
 						$testingResult={$testingResultRef.current}
 						$modelStatsFinshed={$modelStatsFinshedRef.current}
-						showStats={selectedEngine === "deckgl"}
+						showStats={showStats}
 						onAmountChange={handleModelAmountChanged}
 						onTestingClicked={handleTestingClicked}
 						onChangeModelClick={handleResetModelClicked}

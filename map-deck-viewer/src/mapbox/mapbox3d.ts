@@ -4,37 +4,54 @@ import { Base3d } from "../base3d/base3d";
 
 export class Mapbox3d extends Base3d {
 
-    public override addLayer(modelFile: File): Promise<void> {
-        console.log("Layer added using mapbox");
+    private models: File[] = [];
 
+    public override addLayers(models: File[]): Promise<void> {
         const map = this.mapbox.getMap();
+        const coords = this.createCoordinates(models.length);
 
-        const objectURL = URL.createObjectURL(modelFile);
+        for (let i = 0; i < models.length; i++) {
 
-        // @ts-ignore
-        map.addModel("model", objectURL);
+            const modelId = this.createModelId(i);
+            const model = models[i];
 
-        const source: FeatureCollection = {
-            type: "FeatureCollection",
-            features: [
-                { type: "Feature", geometry: { coordinates: [0, 0], type: "Point" }, properties: {} }
-            ]
+            if (model == null) {
+                throw new Error();
+            }
+
+            // @ts-ignore
+            map.addModel(modelId, URL.createObjectURL(model));
+
+            const coordinates = coords[i];
+
+            if (coordinates == null) {
+                throw new Error();
+            }
+
+            const source: FeatureCollection = {
+                type: "FeatureCollection",
+                features: [
+                    { type: "Feature", geometry: { coordinates, type: "Point" }, properties: {} }
+                ]
+            }
+
+            const modelSourceId = this.createModelSourceId(i);
+
+            map.addSource(modelSourceId, { type: "geojson", data: source });
+
+            const modelLayer = {
+                id: this.createModelLayerId(i),
+                type: "model",
+                layout: {
+                    "model-id": modelId
+                },
+                source: modelSourceId
+            }
+
+            // @ts-ignore
+            map.addLayer(modelLayer);
+
         }
-
-        map.addSource("model-source", { type: "geojson", data: source });
-
-        const modelLayer = {
-            id: "model-layer",
-            type: "model",
-            layout: {
-                "model-id": "model"
-            },
-            source: "model-source"
-        }
-
-        // @ts-ignore
-        map.addLayer(modelLayer);
-
 
         return Promise.resolve();
     }
@@ -42,9 +59,10 @@ export class Mapbox3d extends Base3d {
 
     public override removeLayer(): void {
         const map = this.mapbox.getMap();
-        map.removeLayer("model-layer");
-        map.removeSource("model-source");
-
+        this.models.forEach((_, index) => {
+            map.removeLayer(this.createModelLayerId(index));
+            map.removeSource(this.createModelSourceId(index));
+        });
     }
 
     public override changeModelAmount(amount: number): void {
@@ -65,5 +83,12 @@ export class Mapbox3d extends Base3d {
             source.setData(updatedData);
         }
     }
+
+    private createModelId = (index: number) => `model-${index}`;
+
+    private createModelLayerId = (index: number) => `model-${index}`;
+
+    private createModelSourceId = (index: number) => `model-source-${index}`;
+
 
 }

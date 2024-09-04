@@ -1,9 +1,9 @@
 import { ChangeEvent, useRef, useState } from "react";
-import "./model-input.css";
 import type { EngineType } from "@joshnice/map-deck-viewer";
+import "./model-input.css";
 
 interface ModelInputProps {
-	onModelInput: (modelPath: File, engine: EngineType) => void;
+	onModelInput: (modelPath: File[], engine: EngineType) => void;
 }
 
 export function ModelInputComponent({ onModelInput }: ModelInputProps) {
@@ -13,9 +13,8 @@ export function ModelInputComponent({ onModelInput }: ModelInputProps) {
 
 	const onFileInputted = (event: ChangeEvent<HTMLInputElement>) => {
 		setLoading(true);
-		const model = event.target.files?.[0];
-		if (model != null) {
-			onModelInput(model, engine);
+		if (event.target.files != null) {
+			onModelInput(Array.from(event.target.files), engine);
 		}
 	};
 
@@ -36,7 +35,7 @@ export function ModelInputComponent({ onModelInput }: ModelInputProps) {
 				<>
 					<h1>Get started by pick a model</h1>
 					<button onClick={onFileUploadButtonClick}>Choose a file</button>
-					<input ref={inputRef} type="file" accept=".glb" onChange={onFileInputted} />
+					<input ref={inputRef} type="file" accept=".glb" onChange={onFileInputted} multiple />
 					<select value={engine} onChange={(value) => onEngineChange(value.target.value)}>
 						<option value="deckgl">Deckgl</option>
 						<option value="mapbox">Mapbox</option>

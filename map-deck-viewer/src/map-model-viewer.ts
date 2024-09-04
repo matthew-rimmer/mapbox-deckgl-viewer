@@ -5,11 +5,12 @@ import type { EngineType, MapDeckViewOptions, MapDeckViewerSubjects } from "./ty
 import type { Stats } from "./types/deckgl-types";
 import { Mapbox3d } from "./mapbox/mapbox3d";
 import { DeckGl } from "./deckgl/deckgl";
+import type { Base3d } from "./base3d/base3d";
 
-export class MapDeckView {
+export class MapModelViewer {
 	private readonly mapbox: Mapbox;
 
-	private map3d: Mapbox3d | null = null;
+	private map3d: Base3d | null = null;
 
 	private subjects: MapDeckViewerSubjects;
 
@@ -41,8 +42,8 @@ export class MapDeckView {
 
 	}
 
-	public async addModel(model: File) {
-		await this.map3d?.addLayer(model);
+	public async addModels(models: File[]) {
+		await this.map3d?.addLayers(models);
 	}
 
 	public removeModel() {

@@ -8,7 +8,7 @@ export abstract class Base3d {
         this.mapbox = options.mapbox;
     }
 
-    public abstract addLayer(model: File): Promise<void>;
+    public abstract addLayers(models: File[]): Promise<void>;
 
     public abstract removeLayer(): void;
 
