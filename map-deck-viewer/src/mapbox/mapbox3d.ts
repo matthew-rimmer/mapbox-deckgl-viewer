@@ -67,7 +67,7 @@ export class Mapbox3d extends Base3d {
 
     public override changeModelAmount(amount: number): void {
         const map = this.mapbox.getMap();
-        const source = map.getSource("model-source");
+        const source = map.getSource(this.createModelSourceId(0));
 
         if (source?.type === "geojson") {
 

@@ -98,17 +98,6 @@ export class DeckGl extends Base3d {
 
 	public changeModelAmount(amount: number) {
 		const data: { coords: [number, number] }[] = this.createCoordinates(amount).map((coords) => ({ coords }));
-		const columnsAndRows = Math.floor(Math.sqrt(amount));
-		const halfColumnAndRows = columnsAndRows / 2;
-
-		for (let modelIndex = 0; modelIndex < amount; modelIndex += 1) {
-			const row = Math.floor(modelIndex / columnsAndRows);
-			const column = modelIndex % columnsAndRows;
-			const longIncrement = (row - halfColumnAndRows) / 10000;
-			const latIncrement = (column - halfColumnAndRows) / 10000;
-			data.push({ coords: [longIncrement, latIncrement] });
-		}
-
 		try {
 			this.mapboxOverlay?.setProps({
 				layers: [this.createModelLayer(data)],
