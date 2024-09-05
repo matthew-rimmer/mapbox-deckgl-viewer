@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { ReplaySubject, Subject } from "rxjs";
+import { v4 as uuid } from "uuid";
 import { EngineType, MapModelViewer, Stats } from "@joshnice/map-deck-viewer";
 import { ModelInputComponent } from "../components/model-input";
 import { ModelSettingsComponent } from "../components/model-settings";
@@ -16,6 +17,7 @@ export default function Map() {
 	const viewer = useRef<MapModelViewer | null>(null);
 	const [showModelUpload, setShowModalUpload] = useState(true);
 	const [showStats, setShowStats] = useState(false);
+	const [models, setModels] = useState<Record<string, File>>({});
 
 	// Stats
 	const $testingRef = useRef(new Subject<boolean>());
@@ -28,9 +30,14 @@ export default function Map() {
 	const $deckglFailedToLoadModel = useRef(new ReplaySubjectReset<string>());
 
 	const handleModelInput = async (models: File[], engine: EngineType) => {
+		const modelsState: Record<string, File> = {};
+		models.forEach((model) => {
+			modelsState[uuid()] = model;
+		});
 		viewer.current?.setEngine(engine);
-		setShowStats(engine === "deckgl" && models.length === 1);
 		await viewer.current?.addModels(models);
+		setShowStats(engine === "deckgl" && models.length === 1);
+		setModels(modelsState);
 		setShowModalUpload(false);
 	};
 
@@ -47,8 +54,8 @@ export default function Map() {
 		setShowModalUpload(true);
 	};
 
-	const handleModelAmountChanged = (amount: number) => {
-		viewer.current?.changeModelAmount(amount);
+	const handleModelAmountChanged = (id: string, amount: number) => {
+		viewer.current?.changeModelAmount(id, amount);
 	};
 
 	const handleGithubClick = () => {
@@ -82,6 +89,7 @@ export default function Map() {
 						$testingResult={$testingResultRef.current}
 						$modelStatsFinshed={$modelStatsFinshedRef.current}
 						showStats={showStats}
+						models={models}
 						onAmountChange={handleModelAmountChanged}
 						onTestingClicked={handleTestingClicked}
 						onChangeModelClick={handleResetModelClicked}

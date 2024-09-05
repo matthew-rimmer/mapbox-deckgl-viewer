@@ -12,7 +12,7 @@ export abstract class Base3d {
 
     public abstract removeLayer(): void;
 
-    public abstract changeModelAmount(amount: number): void;
+    public abstract changeModelAmount(id: string, amount: number): void;
 
     public createCoordinates(amount: number): [number, number][] {
         const data: [number, number][] = [];

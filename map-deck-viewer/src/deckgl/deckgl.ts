@@ -96,7 +96,7 @@ export class DeckGl extends Base3d {
 		}
 	}
 
-	public changeModelAmount(amount: number) {
+	public changeModelAmount(id: string, amount: number) {
 		const data: { coords: [number, number] }[] = this.createCoordinates(amount).map((coords) => ({ coords }));
 		try {
 			this.mapboxOverlay?.setProps({

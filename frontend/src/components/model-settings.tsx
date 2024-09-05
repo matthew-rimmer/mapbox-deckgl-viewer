@@ -9,7 +9,8 @@ interface ModelSettingsProps {
 	$renderingSceneFinshed: ReplaySubjectReset<number>;
 	$modelStatsFinshed: ReplaySubject<Stats>;
 	showStats: boolean;
-	onAmountChange: (amount: number) => void;
+	models: Record<string, File>;
+	onAmountChange: (id: string, amount: number) => void;
 	onTestingClicked: () => void;
 	onChangeModelClick: () => void;
 }
@@ -19,6 +20,7 @@ export function ModelSettingsComponent({
 	$renderingSceneFinshed,
 	$modelStatsFinshed,
 	showStats,
+	models,
 	onAmountChange,
 	onTestingClicked,
 	onChangeModelClick,
@@ -28,7 +30,7 @@ export function ModelSettingsComponent({
 	const [stats, setStats] = useState<Stats | null>(null);
 
 	const [testing, setTesting] = useState(false);
-	const [amount, setAmount] = useState(1);
+	const [amount, setAmount] = useState<Record<string, number>>(createStartingAmount(models));
 
 	useEffect(() => {
 		const testingResultSub = $testingResult.subscribe((result) => {
@@ -51,10 +53,10 @@ export function ModelSettingsComponent({
 		};
 	}, []);
 
-	const handleAmountChanged = (amount: number) => {
-		const parsedAmount = Number.isNaN(amount) ? 0 : amount;
-		setAmount(parsedAmount);
-		onAmountChange(parsedAmount);
+	const handleAmountChanged = (id: string, newAmount: number) => {
+		const parsedAmount = Number.isNaN(newAmount) ? 0 : newAmount;
+		setAmount({ ...amount, [id]: parsedAmount });
+		onAmountChange(id, parsedAmount);
 	};
 
 	const handleTestingClicked = () => {
@@ -108,15 +110,17 @@ export function ModelSettingsComponent({
 				<div className={`model-setting-item ${getPerformanceClassName()}`}>
 					Performance: <span>{results ? `${results.toFixed(2)} fps` : "No result"}</span>
 				</div>
-				<div className="model-setting-item">
-					Amount
-					<input
-						className="amount-input"
-						type="number"
-						value={amount ?? 0}
-						onChange={({ target }) => handleAmountChanged(Number.parseInt(target.value))}
-					/>
-				</div>
+				{Object.entries(models).map(([id, modelFile]) => (
+					<div className="model-setting-item" key={id}>
+						{modelFile.name} Amount
+						<input
+							className="amount-input"
+							type="number"
+							value={amount[id]}
+							onChange={({ target }) => handleAmountChanged(id, Number.parseInt(target.value))}
+						/>
+					</div>
+				))}
 				{showStats && (
 					<div className="model-setting-item model-stats">
 						{stats != null &&
@@ -140,4 +144,12 @@ export function ModelSettingsComponent({
 			</div>
 		</div>
 	);
+}
+
+function createStartingAmount(models: Record<string, File>) {
+	const amount: Record<string, number> = {};
+	Object.keys(models).forEach((model) => {
+		amount[model] = 1;
+	});
+	return amount;
 }

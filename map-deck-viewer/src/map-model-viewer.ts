@@ -54,8 +54,8 @@ export class MapModelViewer {
 		this.mapbox.startTesting();
 	}
 
-	public changeModelAmount(amount: number) {
-		this.map3d?.changeModelAmount(amount);
+	public changeModelAmount(id: string, amount: number) {
+		this.map3d?.changeModelAmount(id, amount);
 	}
 
 	private verifySubjects(subjects: MapDeckViewOptions["subjects"] = {}) {
