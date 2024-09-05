@@ -79,6 +79,10 @@ export class Mapbox {
 		this.enableInteraction();
 	}
 
+	public setZoomLevel(zoomLevel: number) {
+		this.startPosition.zoom = zoomLevel;
+	}
+
 	private enableInteraction() {
 		this.map?.dragPan.enable();
 		this.map?.dragRotate.enable();

@@ -10,9 +10,11 @@ interface ModelSettingsProps {
 	$modelStatsFinshed: ReplaySubject<Stats>;
 	showStats: boolean;
 	models: Record<string, File>;
+	zoomLevel: number;
 	onAmountChange: (id: string, amount: number) => void;
 	onTestingClicked: () => void;
 	onChangeModelClick: () => void;
+	onZoomLevelChange: (zoomLevel: number) => void;
 }
 
 export function ModelSettingsComponent({
@@ -21,9 +23,11 @@ export function ModelSettingsComponent({
 	$modelStatsFinshed,
 	showStats,
 	models,
+	zoomLevel,
 	onAmountChange,
 	onTestingClicked,
 	onChangeModelClick,
+	onZoomLevelChange,
 }: ModelSettingsProps) {
 	const [results, setResults] = useState<number | null>(null);
 	const [renderingTime, setRenderingTime] = useState<number | null>(null);
@@ -133,6 +137,15 @@ export function ModelSettingsComponent({
 							})}
 					</div>
 				)}
+				<div className="model-setting-item">
+					Zoom level
+					<input
+						className="amount-input"
+						type="number"
+						value={zoomLevel}
+						onChange={({ target }) => onZoomLevelChange(Number.parseInt(target.value))}
+					/>
+				</div>
 				<div className="model-setting-item testing-button">
 					<button disabled={testing} onClick={handleTestingClicked}>
 						Start Testing

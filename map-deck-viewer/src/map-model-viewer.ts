@@ -58,6 +58,10 @@ export class MapModelViewer {
 		this.map3d?.changeModelAmount(id, amount);
 	}
 
+	public setZoomLevel(zoomLevel: number) {
+		this.mapbox.setZoomLevel(zoomLevel);
+	}
+
 	private verifySubjects(subjects: MapDeckViewOptions["subjects"] = {}) {
 		const { $onLumaGlWarning, $onModelFailedToLoad, $renderingSceneFinshed, $testing, $testingResult, $onModelStatsFinished } = subjects;
 		return {

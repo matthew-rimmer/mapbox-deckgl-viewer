@@ -18,6 +18,7 @@ export default function Map() {
 	const [showModelUpload, setShowModalUpload] = useState(true);
 	const [showStats, setShowStats] = useState(false);
 	const [models, setModels] = useState<Record<string, File>>({});
+	const [zoomLevel, setZoomLevel] = useState<number>(20);
 
 	// Stats
 	const $testingRef = useRef(new Subject<boolean>());
@@ -62,6 +63,11 @@ export default function Map() {
 		window.open("https://github.com/joshnice/mapbox-deckgl-viewer", "_blank")?.focus();
 	};
 
+	const handleZoomLevelChange = (zoomLevel: number) => {
+		setZoomLevel(zoomLevel);
+		viewer?.current?.setZoomLevel(zoomLevel);
+	};
+
 	const renderMap = (element: HTMLDivElement) => {
 		if (viewer.current == null) {
 			viewer.current = new MapModelViewer({
@@ -90,9 +96,11 @@ export default function Map() {
 						$modelStatsFinshed={$modelStatsFinshedRef.current}
 						showStats={showStats}
 						models={models}
+						zoomLevel={zoomLevel}
 						onAmountChange={handleModelAmountChanged}
 						onTestingClicked={handleTestingClicked}
 						onChangeModelClick={handleResetModelClicked}
+						onZoomLevelChange={handleZoomLevelChange}
 					/>
 					<WarningConsoleComponent
 						$deckglWarningLog={$deckglWarningLog.current}
