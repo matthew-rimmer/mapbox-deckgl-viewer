@@ -42,7 +42,7 @@ export class MapModelViewer {
 
 	}
 
-	public async addModels(models: File[]) {
+	public async addModels(models: Record<string, File>) {
 		await this.map3d?.addLayers(models);
 	}
 

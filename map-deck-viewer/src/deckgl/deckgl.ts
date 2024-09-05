@@ -11,7 +11,7 @@ export class DeckGl extends Base3d {
 
 	private mapboxOverlay: MapboxOverlay | null = null;
 
-	private model: any | null = null;
+	private loadedModels: Record<string, any> = {};
 
 	private readonly $onModelFailedToLoad: DeckGlSubjects["$onModelFailedToLoad"];
 
@@ -33,23 +33,30 @@ export class DeckGl extends Base3d {
 		this.events(options.subjects);
 	}
 
-	public async addLayers(models: File[]) {
+	public override async addLayers(models: Record<string, File>) {
+		super.addLayers(models);
 
-		this.singleModel = models.length === 1;
+		this.singleModel = Object.keys(models).length === 1;
 
-		const coords = this.createCoordinates(models.length);
+		const coords = this.createCoordinates();
 
-		for (let i = 0; i < models.length; i++) {
-			const model = models[i];
+		const modelsWithId = Object.entries(models);
+		for (let i = 0; i < modelsWithId.length; i++) {
+			const modelWithId = modelsWithId[i];
+			if (modelWithId == null) {
+				throw new Error();
+			}
 
-			if (model == null) {
+			const [modelId, modelFile] = modelWithId;
+
+			if (modelFile == null) {
 				throw new Error();
 			}
 
 			let error = false;
 			this.startLoadingModel = performance.now();
 			try {
-				this.model = await load(model, GLTFLoader);
+				this.loadedModels[modelId] = await load(modelFile, GLTFLoader);
 			} catch (err: any) {
 				error = true;
 				if ("message" in err) {
@@ -62,7 +69,7 @@ export class DeckGl extends Base3d {
 			}
 
 			if (this.singleModel) {
-				this.getStats(model.name);
+				this.getStats(modelFile.name, this.loadedModels[modelId]);
 			}
 
 			const modelCoord = coords[i];
@@ -71,7 +78,7 @@ export class DeckGl extends Base3d {
 				throw new Error();
 			}
 
-			this.modelLayers?.push(this.createModelLayer([{ coords: modelCoord }]));
+			this.modelLayers?.push(this.createModelLayer(modelId, [{ coords: modelCoord }]));
 		}
 
 		this.mapboxOverlay = new MapboxOverlay({
@@ -96,22 +103,33 @@ export class DeckGl extends Base3d {
 		}
 	}
 
-	public changeModelAmount(id: string, amount: number) {
-		const data: { coords: [number, number] }[] = this.createCoordinates(amount).map((coords) => ({ coords }));
+	public override changeModelAmount(id: string, amount: number) {
+		super.changeModelAmount(id, amount);
+
+		const allCoords = this.createCoordinates();
+		let totalAmountCoordsUsed = 0;
+		const layers: ScenegraphLayer[] = [];
+
+		Object.entries(this.modelsAmount).forEach(([modelId, modelAmount]) => {
+			const data: { coords: [number, number] }[] = allCoords.slice(totalAmountCoordsUsed, totalAmountCoordsUsed + modelAmount).map((coords) => ({ coords }))
+			totalAmountCoordsUsed += modelAmount;
+			layers.push(this.createModelLayer(modelId, data));
+		});
+
 		try {
 			this.mapboxOverlay?.setProps({
-				layers: [this.createModelLayer(data)],
+				layers,
 			});
 		} catch (err) {
 			console.error("err", err);
 		}
 	}
 
-	private createModelLayer(data: { coords: [number, number] }[]) {
+	private createModelLayer(id: string, data: { coords: [number, number] }[]) {
 		return new ScenegraphLayer({
-			id: "model-layer",
+			id,
 			type: ScenegraphLayer,
-			scenegraph: this.model,
+			scenegraph: this.loadedModels[id],
 			getScene: (scenegraph) => {
 				const finishRenderingScene = performance.now();
 				const totalRenderingTimeSecs = (finishRenderingScene - this.startLoadingModel) / 1000;
@@ -133,14 +151,14 @@ export class DeckGl extends Base3d {
 		};
 	}
 
-	private getStats(modelName: string) {
+	private getStats(modelName: string, model: any) {
 		this.stats = {
 			name: modelName.split(".glb")[0] ?? "	",
-			sizeMb: Number.parseFloat((this.model.buffers[0].byteLength / 1048576).toFixed(2)),
-			accessor: this.model.json.accessors.length,
-			material: this.model.json.materials.length,
-			mesh: this.model.json.meshes.length,
-			nodes: this.model.json.nodes.length,
+			sizeMb: Number.parseFloat((model.buffers[0].byteLength / 1048576).toFixed(2)),
+			accessor: model.json.accessors.length,
+			material: model.json.materials.length,
+			mesh: model.json.meshes.length,
+			nodes: model.json.nodes.length,
 		}
 		this.$onModelStatsFinished.next(this.stats);
 	}

@@ -35,7 +35,7 @@ export default function Map() {
 			modelsState[uuid()] = model;
 		});
 		viewer.current?.setEngine(engine);
-		await viewer.current?.addModels(models);
+		await viewer.current?.addModels(modelsState);
 		setShowStats(engine === "deckgl" && models.length === 1);
 		setModels(modelsState);
 		setShowModalUpload(false);

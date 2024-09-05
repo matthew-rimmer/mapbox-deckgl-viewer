@@ -4,16 +4,22 @@ import { Base3d } from "../base3d/base3d";
 
 export class Mapbox3d extends Base3d {
 
-    private models: File[] = [];
-
-    public override addLayers(models: File[]): Promise<void> {
+    public override addLayers(models: Record<string, File>): Promise<void> {
+        super.addLayers(models);
         const map = this.mapbox.getMap();
-        const coords = this.createCoordinates(models.length);
+        const coords = this.createCoordinates();
 
-        for (let i = 0; i < models.length; i++) {
+        const modelsWithId = Object.entries(models);
 
-            const modelId = this.createModelId(i);
-            const model = models[i];
+        for (let i = 0; i < Object.keys(models).length; i++) {
+
+            const modelWithId = modelsWithId[i];
+
+            if (modelWithId == null) {
+                throw new Error();
+            }
+
+            const [modelId, model] = modelWithId;
 
             if (model == null) {
                 throw new Error();
@@ -35,17 +41,15 @@ export class Mapbox3d extends Base3d {
                 ]
             }
 
-            const modelSourceId = this.createModelSourceId(i);
-
-            map.addSource(modelSourceId, { type: "geojson", data: source });
+            map.addSource(modelId, { type: "geojson", data: source });
 
             const modelLayer = {
-                id: this.createModelLayerId(i),
+                id: modelId,
                 type: "model",
                 layout: {
                     "model-id": modelId
                 },
-                source: modelSourceId
+                source: modelId
             }
 
             // @ts-ignore
@@ -59,36 +63,37 @@ export class Mapbox3d extends Base3d {
 
     public override removeLayer(): void {
         const map = this.mapbox.getMap();
-        this.models.forEach((_, index) => {
-            map.removeLayer(this.createModelLayerId(index));
-            map.removeSource(this.createModelSourceId(index));
+        Object.keys(this.modelsAmount).forEach((modelId) => {
+            map.removeLayer(modelId);
+            map.removeSource(modelId);
         });
     }
 
     public override changeModelAmount(id: string, amount: number): void {
+        super.changeModelAmount(id, amount);
         const map = this.mapbox.getMap();
-        const source = map.getSource(this.createModelSourceId(0));
+        let totalCoordsUsed = 0;
+        const coords = this.createCoordinates();
+        Object.entries(this.modelsAmount).forEach(([modelId, modelAmount]) => {
+            const source = map.getSource(modelId);
 
-        if (source?.type === "geojson") {
+            if (source?.type === "geojson") {
 
-            const features: Feature<Point>[] = this.createCoordinates(amount).map((coord) => ({
-                type: "Feature", geometry: { coordinates: [coord[0], coord[1]], type: "Point" }, properties: {}
-            }));
+                const modelCoords = coords.slice(totalCoordsUsed, modelAmount + totalCoordsUsed);
 
-            const updatedData: FeatureCollection = {
-                type: "FeatureCollection",
-                features
+                const features: Feature<Point>[] = modelCoords.map((coord) => ({
+                    type: "Feature", geometry: { coordinates: [coord[0], coord[1]], type: "Point" }, properties: {}
+                }));
+
+                totalCoordsUsed += features.length;
+
+                const updatedData: FeatureCollection = {
+                    type: "FeatureCollection",
+                    features
+                }
+
+                source.setData(updatedData);
             }
-
-            source.setData(updatedData);
-        }
+        });
     }
-
-    private createModelId = (index: number) => `model-${index}`;
-
-    private createModelLayerId = (index: number) => `model-${index}`;
-
-    private createModelSourceId = (index: number) => `model-source-${index}`;
-
-
 }
