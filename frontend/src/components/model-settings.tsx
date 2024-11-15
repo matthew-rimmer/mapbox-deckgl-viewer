@@ -12,7 +12,7 @@ interface ModelSettingsProps {
 	models: Record<string, File>;
 	zoomLevel: number;
 	onAmountChange: (id: string, amount: number) => void;
-	onTestingClicked: () => void;
+	onTestingClicked: (singleModelTest: boolean, amount: number) => void;
 	onChangeModelClick: () => void;
 	onZoomLevelChange: (zoomLevel: number) => void;
 }
@@ -33,6 +33,8 @@ export function ModelSettingsComponent({
 	const [renderingTime, setRenderingTime] = useState<number | null>(null);
 	const [stats, setStats] = useState<Stats | null>(null);
 
+	const [singleModelTest, setSingleModelTest] = useState(false);
+	const [singleModelTestAmount, setSingleModelTestAmount] = useState<number>(0);
 	const [testing, setTesting] = useState(false);
 	const [amount, setAmount] = useState<Record<string, number>>(createStartingAmount(models));
 
@@ -65,7 +67,7 @@ export function ModelSettingsComponent({
 
 	const handleTestingClicked = () => {
 		setTesting(true);
-		onTestingClicked();
+		onTestingClicked(singleModelTest, singleModelTestAmount);
 	};
 
 	const getPerformanceClassName = () => {
@@ -144,6 +146,17 @@ export function ModelSettingsComponent({
 						type="number"
 						value={zoomLevel}
 						onChange={({ target }) => onZoomLevelChange(Number.parseInt(target.value))}
+					/>
+				</div>
+				<div className="model-setting-item">
+					Single Model
+					<input type="checkbox" checked={singleModelTest} onChange={() => setSingleModelTest(!singleModelTest)} />
+					<input
+						disabled={testing || !singleModelTest}
+						className="amount-input"
+						type="number"
+						value={singleModelTestAmount}
+						onChange={({ target }) => setSingleModelTestAmount(Number.parseInt(target.value))}
 					/>
 				</div>
 				<div className="model-setting-item testing-button">
