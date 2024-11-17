@@ -42,8 +42,8 @@ export default function Map() {
 		setShowModalUpload(false);
 	};
 
-	const handleTestingClicked = () => {
-		viewer.current?.startTesting();
+	const handleTestingClicked = (singleModelTest: boolean, amount: number) => {
+		viewer.current?.startTesting(singleModelTest, amount);
 	};
 
 	const handleResetModelClicked = () => {

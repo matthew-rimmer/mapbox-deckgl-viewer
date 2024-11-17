@@ -14,6 +14,10 @@ export class MapModelViewer {
 
 	private subjects: MapDeckViewerSubjects;
 
+	private models: Record<string, File> = {};
+
+	private results: Record<string, number> = {};
+
 	constructor(options: MapDeckViewOptions) {
 		if (options.mapboxAccessKey == null) {
 			throw new Error("Mapbox access key needs to be present");
@@ -50,8 +54,30 @@ export class MapModelViewer {
 		this.map3d?.removeLayer();
 	}
 
-	public startTesting() {
+	public async startTesting(singleModelTest: boolean, modelAmount: number) {
+		if (!singleModelTest) {
+			this.mapbox.startTesting();
+			return;
+		}
+
+		this.removeModel();
+		this.results = {};
+
+		for (const [modelId, modelFile] of Object.entries(this.models)) {
+			await this.testSingleModel(modelAmount,modelId, modelFile);
+		}
+	}
+
+	private testSingleModel(modelAmount: number, modelId: string, modelFile: File) {
+		this.map3d?.addLayers({ [modelId]: modelFile });
+		this.changeModelAmount(modelId, modelAmount);
 		this.mapbox.startTesting();
+		return new Promise<void>((resolve) => {
+			this.subjects.$testingResult.subscribe((result) => {
+				this.results[modelId] = result;
+				resolve();
+			});
+		});
 	}
 
 	public changeModelAmount(id: string, amount: number) {
