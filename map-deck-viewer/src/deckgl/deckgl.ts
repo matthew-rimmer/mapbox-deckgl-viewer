@@ -95,11 +95,15 @@ export class DeckGl extends Base3d {
 				layers: [],
 			});
 
+			this.modelLayers = [];
+
 			this.mapboxOverlay.finalize();
 
 			this.mapbox.getMap().removeControl(this.mapboxOverlay);
 
 			this.stats = null;
+
+			this.modelsAmount = {};
 		}
 	}
 

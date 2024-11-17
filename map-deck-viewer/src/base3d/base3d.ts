@@ -4,7 +4,7 @@ import type { DeckGlSubjects } from "../types/deckgl-types";
 export abstract class Base3d {
     public readonly mapbox: Mapbox;
 
-    public readonly modelsAmount: Record<string, number> = {};
+    public modelsAmount: Record<string, number> = {};
 
     constructor(options: { mapbox: Mapbox; subjects: DeckGlSubjects }) {
         this.mapbox = options.mapbox;

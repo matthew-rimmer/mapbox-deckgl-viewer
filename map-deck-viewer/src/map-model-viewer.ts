@@ -47,6 +47,7 @@ export class MapModelViewer {
 	}
 
 	public async addModels(models: Record<string, File>) {
+		this.models = models;
 		await this.map3d?.addLayers(models);
 	}
 
@@ -60,21 +61,26 @@ export class MapModelViewer {
 			return;
 		}
 
-		this.removeModel();
 		this.results = {};
 
 		for (const [modelId, modelFile] of Object.entries(this.models)) {
-			await this.testSingleModel(modelAmount,modelId, modelFile);
+			await this.testSingleModel(modelAmount, modelId, modelFile);
 		}
+
+		console.log(this.results);
+
 	}
 
-	private testSingleModel(modelAmount: number, modelId: string, modelFile: File) {
-		this.map3d?.addLayers({ [modelId]: modelFile });
+
+	private async testSingleModel(modelAmount: number, modelId: string, modelFile: File) {
+		this.removeModel();
+		await this.map3d?.addLayers({ [modelId]: modelFile });
 		this.changeModelAmount(modelId, modelAmount);
 		this.mapbox.startTesting();
 		return new Promise<void>((resolve) => {
-			this.subjects.$testingResult.subscribe((result) => {
+			const sub = this.subjects.$testingResult.subscribe((result) => {
 				this.results[modelId] = result;
+				sub.unsubscribe();
 				resolve();
 			});
 		});
