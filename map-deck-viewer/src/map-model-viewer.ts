@@ -6,6 +6,7 @@ import type { Stats } from "./types/deckgl-types";
 import { Mapbox3d } from "./mapbox/mapbox3d";
 import { DeckGl } from "./deckgl/deckgl";
 import type { Base3d } from "./base3d/base3d";
+import { createCSV } from "./utils/csv";
 
 export class MapModelViewer {
 	private readonly mapbox: Mapbox;
@@ -67,8 +68,7 @@ export class MapModelViewer {
 			await this.testSingleModel(modelAmount, modelId, modelFile);
 		}
 
-		console.log(this.results);
-
+		createCSV(Object.entries(this.results), ["model name", "avg fps"], "Model testing results")
 	}
 
 
@@ -79,7 +79,7 @@ export class MapModelViewer {
 		this.mapbox.startTesting();
 		return new Promise<void>((resolve) => {
 			const sub = this.subjects.$testingResult.subscribe((result) => {
-				this.results[modelId] = result;
+				this.results[modelId] = Number.parseFloat(result.toFixed(2));
 				sub.unsubscribe();
 				resolve();
 			});
