@@ -1,9 +1,9 @@
 import { ChangeEvent, useRef, useState } from "react";
-import "./model-input.css";
 import type { EngineType } from "@joshnice/map-deck-viewer";
+import "./model-input.css";
 
 interface ModelInputProps {
-	onModelInput: (modelPath: File, engine: EngineType, image?: File) => void;
+	onModelInput: (modelPath: File[], engine: EngineType, image?: File) => void;
 }
 
 export function ModelInputComponent({ onModelInput }: ModelInputProps) {
@@ -24,10 +24,9 @@ export function ModelInputComponent({ onModelInput }: ModelInputProps) {
 				imgInputRef.current?.click();
 			} else {
 				setLoading(true);
-				onModelInput(model, engine);
+				onModelInput(Array.from(event.target.files), engine);
 			}
-		}
-	};
+	};};
 
 	const onImageInputted = (event: ChangeEvent<HTMLInputElement>) => {
 		const image = event.target.files?.[0];
@@ -66,7 +65,7 @@ export function ModelInputComponent({ onModelInput }: ModelInputProps) {
 					<h1>Get started by pick a model</h1>
 					<button onClick={onFileUploadButtonClick}>Choose a file</button>
 					<button onClick={onFileUploadImageButtonClick}>Choose a file (replace image)</button>
-					<input ref={modelInputRef} type="file" accept=".glb" onChange={onModelInputted} />
+					<input ref={modelInputRef} type="file" accept=".glb" onChange={onModelInputted} multiple />
 					<input ref={imgInputRef} type="file" accept="image/*" onChange={onImageInputted} />
 					<select value={engine} onChange={(value) => onEngineChange(value.target.value)}>
 						<option value="deckgl">Deckgl</option>

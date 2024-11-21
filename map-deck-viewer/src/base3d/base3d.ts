@@ -5,26 +5,32 @@ import type { Orientation } from "../types/map-deck-viewer-types";
 export abstract class Base3d {
     public readonly mapbox: Mapbox;
 
+    public modelsAmount: Record<string, number> = {};
+
     constructor(options: { mapbox: Mapbox; subjects: DeckGlSubjects }) {
         this.mapbox = options.mapbox;
     }
 
-    public abstract addLayer(model: File, image?: File): Promise<void>;
+    public addLayers(models: Record<string, File>, image?: File): Promise<void> {
+        Object.keys(models).forEach((model) => {
+            this.modelsAmount[model] = 1;
+        })
+        return Promise.resolve();
+    }
 
     public abstract removeLayer(): void;
 
-    public abstract changeModelAmount(amount: number): void;
+    public changeModelAmount(id: string, amount: number) {
+        this.modelsAmount[id] = amount;
+    };
 
-    public abstract changeModelHeight(height: number): void;
-
-    public abstract changeModelOrientation(orientation: Orientation): void;
-
-    public createCoordinates(amount: number): [number, number][] {
+    public createCoordinates(): [number, number][] {
         const data: [number, number][] = [];
-        const columnsAndRows = Math.floor(Math.sqrt(amount));
+        const totalAmount = Object.values(this.modelsAmount).reduce((sum, val) => sum += val, 0);
+        const columnsAndRows = Math.floor(Math.sqrt(totalAmount));
         const halfColumnAndRows = columnsAndRows / 2;
 
-        for (let modelIndex = 0; modelIndex < amount; modelIndex += 1) {
+        for (let modelIndex = 0; modelIndex < totalAmount; modelIndex += 1) {
             const row = Math.floor(modelIndex / columnsAndRows);
             const column = modelIndex % columnsAndRows;
             const longIncrement = (row - halfColumnAndRows) / 10000;
