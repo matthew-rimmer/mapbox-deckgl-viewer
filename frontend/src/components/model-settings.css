@@ -10,6 +10,9 @@
     height: fit-content;
     width: 260px;
     z-index: 10;
+    max-height: 600px;
+
+    overflow: auto;
 
     color: white;
     font-family: Lato;
@@ -22,12 +25,14 @@
 .model-setting-item {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     gap: 15px;
     font-size: 20px;
 }
 
 .amount-input {
     width: 100px;
+    height: 30px;
 }
 
 .model-setting-items {

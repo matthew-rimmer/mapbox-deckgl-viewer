@@ -15,16 +15,11 @@ import { WebGLDevice } from "@luma.gl/webgl";
 import type { Orientation } from "../types/map-deck-viewer-types";
 
 export class DeckGl extends Base3d {
-
-	private modelLayer: ScenegraphLayer | null = null;
+	private modelLayers: ScenegraphLayer[] = [];
 
 	private mapboxOverlay: MapboxOverlay | null = null;
 
-	private model: GLTFPostprocessed | null = null;
-
-	private testing: boolean = false;
-
-	private fpsValues: number[] = [];
+	private loadedModels: Record<string, any> = {};
 
 	private readonly $onModelFailedToLoad: DeckGlSubjects["$onModelFailedToLoad"];
 
@@ -36,11 +31,7 @@ export class DeckGl extends Base3d {
 
 	private stats: Stats | null = null;
 
-	private orientation: Orientation = { x: 0, y: 0, z: 90 };
-
-	private height: number = 0;
-
-	private amount: number = 1;
+	private singleModel: boolean = true;
 
 	constructor(options: { mapbox: Mapbox; subjects: DeckGlSubjects }) {
 		super(options);
@@ -50,42 +41,67 @@ export class DeckGl extends Base3d {
 		this.events(options.subjects);
 	}
 
-	public async addLayer(model: File, image?: File) {
-		this.startLoadingModel = performance.now();
-		if (image) {
-			this.addLayerWithImageLuma(model, image);
-			return;
-		}
-		console.log("Layer added using deckgl");
-		let error = false;
-		try {
-			const rawModel = await load(model, GLTFLoader);
-			const processed = postProcessGLTF(rawModel);
-			this.model = processed;
-		} catch (err: any) {
-			error = true;
-			if ("message" in err) {
-				this.$onModelFailedToLoad.next(err.message);
+	public override async addLayers(models: Record<string, File>, image?: File) {
+		super.addLayers(models);
+
+		this.singleModel = Object.keys(models).length === 1;
+
+		const coords = this.createCoordinates();
+		
+
+		const modelsWithId = Object.entries(models);
+		for (let i = 0; i < modelsWithId.length; i++) {
+			const modelWithId = modelsWithId[i];
+			if (modelWithId == null) {
+				throw new Error();
 			}
+
+			const [modelId, modelFile] = modelWithId;
+
+			if (modelFile == null) {
+				throw new Error();
+			}
+
+			let error = false;
+			this.startLoadingModel = performance.now();
+			try {
+				const loadedModel = await load(modelFile, GLTFLoader);
+				
+				if (image) {
+					this.addLayerWithImageLuma(loadedModel, image);
+					return;
+				}
+
+				this.loadedModels[modelId] = loadedModel;
+			} catch (err: any) {
+				error = true;
+				if ("message" in err) {
+					this.$onModelFailedToLoad.next(err.message);
+				}
+			}
+
+			if (error) {
+				return;
+			}
+
+			if (this.singleModel) {
+				this.getStats(modelFile.name, this.loadedModels[modelId]);
+			}
+
+			const modelCoord = coords[i];
+
+			if (modelCoord == null) {
+				throw new Error();
+			}
+
+			this.modelLayers?.push(this.createModelLayer(modelId, [{ coords: modelCoord }]));
 		}
 
-		if (error) {
-			return;
-		}
-
-		this.getStats(model.name);
-		this.modelLayer = this.createModelLayer([{ coords: [0, 0] }]);
 		this.mapboxOverlay = new MapboxOverlay({
 			interleaved: true,
-			_onMetrics: (metrics: { fps: number }) => {
-				if (this.testing) {
-					this.fpsValues.push(metrics.fps);
-				}
-			},
-			layers: [this.modelLayer],
+			layers: this.modelLayers,
 		});
 
-		// @ts-ignore
 		this.mapbox.getMap().addControl(this.mapboxOverlay);
 	}
 
@@ -240,39 +256,30 @@ export class DeckGl extends Base3d {
 				layers: [],
 			});
 
+			this.modelLayers = [];
+
 			this.mapboxOverlay.finalize();
 
-			// @ts-ignore
 			this.mapbox.getMap().removeControl(this.mapboxOverlay);
 
 			this.stats = null;
+
+			this.modelsAmount = {};
 		}
 	}
 
-	public changeModelAmount(amount: number) {
-		this.amount = amount;
+	public override changeModelAmount(id: string, amount: number) {
+		super.changeModelAmount(id, amount);
 
-		try {
-			this.mapboxOverlay?.setProps({
-				layers: [this.createModelLayer(this.generateCoords(this.amount), this.orientation, this.height)],
-			});
-		} catch (err) {
-			console.error("err", err);
-		}
-	}
+		const allCoords = this.createCoordinates();
+		let totalAmountCoordsUsed = 0;
+		const layers: ScenegraphLayer[] = [];
 
-	private generateCoords = (amount: number) => {
-		const data: { coords: [number, number] }[] = [];
-		const columnsAndRows = Math.floor(Math.sqrt(amount));
-		const halfColumnAndRows = columnsAndRows / 2;
-
-		for (let modelIndex = 0; modelIndex < amount; modelIndex += 1) {
-			const row = Math.floor(modelIndex / columnsAndRows);
-			const column = modelIndex % columnsAndRows;
-			const longIncrement = (row - halfColumnAndRows) / 10000;
-			const latIncrement = (column - halfColumnAndRows) / 10000;
-			data.push({ coords: [longIncrement, latIncrement] });
-		}
+		Object.entries(this.modelsAmount).forEach(([modelId, modelAmount]) => {
+			const data: { coords: [number, number] }[] = allCoords.slice(totalAmountCoordsUsed, totalAmountCoordsUsed + modelAmount).map((coords) => ({ coords }))
+			totalAmountCoordsUsed += modelAmount;
+			layers.push(this.createModelLayer(modelId, data));
+		});
 
 		return data;
 	}
@@ -294,33 +301,18 @@ export class DeckGl extends Base3d {
 
 		try {
 			this.mapboxOverlay?.setProps({
-				layers: [this.createModelLayer(this.generateCoords(this.amount), this.orientation, this.height)],
+				layers,
 			});
 		} catch (err) {
 			console.error("err", err);
 		}
 	}
 
-	public changeModelHeight(height: number) {
-		this.height = height;
-
-		try {
-			this.mapboxOverlay?.setProps({
-				layers: [this.createModelLayer(this.generateCoords(this.amount), this.orientation, height)],
-			});
-		} catch (err) {
-			console.error("err", err);
-		}
-	}
-
-
-
-
-	private createModelLayer(data: { coords: [number, number] }[], orientation?: Orientation, height: number = 0) {
+	private createModelLayer(id: string, data: { coords: [number, number] }[]) {
 		return new ScenegraphLayer({
-			id: "model-layer",
+			id,
 			type: ScenegraphLayer,
-			scenegraph: this.model,
+			scenegraph: this.loadedModels[id],
 			getScene: (scenegraph) => {
 				const finishRenderingScene = performance.now();
 				const totalRenderingTimeSecs = (finishRenderingScene - this.startLoadingModel) / 1000;
@@ -339,34 +331,20 @@ export class DeckGl extends Base3d {
 	}
 
 	private events(subjects: DeckGlSubjects) {
-		subjects.$testing.subscribe((value) => {
-			if (!value) {
-				const sum = this.fpsValues.reduce((sum, val) => (sum += val), 0);
-				const result = sum / this.fpsValues.length;
-				subjects.$testingResult.next(result);
-				if (this.stats != null) {
-					this.stats.fps = result;
-				}
-				this.fpsValues = [];
-			}
-			this.testing = value;
-		});
-
 		luma.log.warn = (warning: string) => () => {
 			console.warn(warning);
 			subjects.$onLumaGlWarning.next(warning);
 		};
 	}
 
-	private getStats(modelName: string) {
-
+	private getStats(modelName: string, model: any) {
 		this.stats = {
 			name: modelName.split(".glb")[0] ?? "	",
-			sizeMb: Number.parseFloat((this.model?.buffers?.[0]?.byteLength ?? 0 / 1048576).toFixed(2)),
-			accessor: this.model?.accessors?.length ?? 0,
-			material: this.model?.materials?.length ?? 0,
-			mesh: this.model?.meshes?.length ?? 0,
-			nodes: this.model?.nodes?.length ?? 0,
+			sizeMb: Number.parseFloat((model.buffers[0].byteLength / 1048576).toFixed(2)),
+			accessor: model.json.accessors.length,
+			material: model.json.materials.length,
+			mesh: model.json.meshes.length,
+			nodes: model.json.nodes.length,
 		}
 		this.$onModelStatsFinished.next(this.stats);
 	}

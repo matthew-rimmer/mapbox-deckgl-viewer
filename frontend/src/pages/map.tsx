@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { ReplaySubject, Subject } from "rxjs";
-import { EngineType, MapDeckView, Orientation, Stats } from "@joshnice/map-deck-viewer";
+import { v4 as uuid } from "uuid";
+import { EngineType, MapModelViewer, Stats } from "@joshnice/map-deck-viewer";
 import { ModelInputComponent } from "../components/model-input";
 import { ModelSettingsComponent } from "../components/model-settings";
 import { WarningConsoleComponent } from "../components/warning-console";
@@ -13,9 +14,11 @@ const MAPBOX_ACCESS_TOKEN =
 	"pk.eyJ1Ijoiam9zaG5pY2U5OCIsImEiOiJjanlrMnYwd2IwOWMwM29vcnQ2aWIwamw2In0.RRsdQF3s2hQ6qK-7BH5cKg";
 
 export default function Map() {
-	const viewer = useRef<MapDeckView | null>(null);
+	const viewer = useRef<MapModelViewer | null>(null);
 	const [showModelUpload, setShowModalUpload] = useState(true);
-	const [selectedEngine, setSelectedEngine] = useState<EngineType>("deckgl");
+	const [showStats, setShowStats] = useState(false);
+	const [models, setModels] = useState<Record<string, File>>({});
+	const [zoomLevel, setZoomLevel] = useState<number>(20);
 
 	// Stats
 	const $testingRef = useRef(new Subject<boolean>());
@@ -27,16 +30,20 @@ export default function Map() {
 	const $deckglWarningLog = useRef(new ReplaySubjectReset<string>());
 	const $deckglFailedToLoadModel = useRef(new ReplaySubjectReset<string>());
 
-	const handleModelInput = async (model: File, engine: EngineType, image?: File) => {
-		setSelectedEngine(engine);
+	const handleModelInput = async (models: File[], engine: EngineType) => {
+		const modelsState: Record<string, File> = {};
+		models.forEach((model) => {
+			modelsState[uuid()] = model;
+		});
 		viewer.current?.setEngine(engine);
-
-		await viewer.current?.addModel(model, image);
+		await viewer.current?.addModels(modelsState);
+		setShowStats(engine === "deckgl" && models.length === 1);
+		setModels(modelsState);
 		setShowModalUpload(false);
 	};
 
-	const handleTestingClicked = () => {
-		viewer.current?.startTesting();
+	const handleTestingClicked = (singleModelTest: boolean, amount: number) => {
+		viewer.current?.startTesting(singleModelTest, amount);
 	};
 
 	const handleResetModelClicked = () => {
@@ -48,8 +55,8 @@ export default function Map() {
 		setShowModalUpload(true);
 	};
 
-	const handleModelAmountChanged = (amount: number) => {
-		viewer.current?.changeModelAmount(amount);
+	const handleModelAmountChanged = (id: string, amount: number) => {
+		viewer.current?.changeModelAmount(id, amount);
 	};
 
 	const handleHeightChanged = (height: number) => {
@@ -66,9 +73,14 @@ export default function Map() {
 		window.open("https://github.com/joshnice/mapbox-deckgl-viewer", "_blank")?.focus();
 	};
 
+	const handleZoomLevelChange = (zoomLevel: number) => {
+		setZoomLevel(zoomLevel);
+		viewer?.current?.setZoomLevel(zoomLevel);
+	};
+
 	const renderMap = (element: HTMLDivElement) => {
 		if (viewer.current == null) {
-			viewer.current = new MapDeckView({
+			viewer.current = new MapModelViewer({
 				mapElement: element,
 				mapboxAccessKey: MAPBOX_ACCESS_TOKEN,
 				subjects: {
@@ -92,12 +104,15 @@ export default function Map() {
 						$renderingSceneFinshed={$renderingSceneFinshedRef.current}
 						$testingResult={$testingResultRef.current}
 						$modelStatsFinshed={$modelStatsFinshedRef.current}
-						showStats={selectedEngine === "deckgl"}
+						showStats={showStats}
+						models={models}
+						zoomLevel={zoomLevel}
 						onAmountChange={handleModelAmountChanged}
 						onHeightChange={handleHeightChanged}
 						onOrientationChange={handleOrientationChanged}
 						onTestingClicked={handleTestingClicked}
 						onChangeModelClick={handleResetModelClicked}
+						onZoomLevelChange={handleZoomLevelChange}
 					/>
 					<WarningConsoleComponent
 						$deckglWarningLog={$deckglWarningLog.current}

@@ -1,7 +1,6 @@
 import type { DeckGlSubjects } from "./deckgl-types";
-import type { MapboxSubjects } from "./mapbox-types";
 
-export type MapDeckViewerSubjects = DeckGlSubjects & MapboxSubjects;
+export type MapDeckViewerSubjects = DeckGlSubjects;
 
 export const mapDeckViewerSubjectsNames: (keyof MapDeckViewerSubjects)[] = [
 	"$onLumaGlWarning",

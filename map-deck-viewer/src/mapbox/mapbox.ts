@@ -1,10 +1,15 @@
 import { Map } from "mapbox-gl";
 import { Subject } from "rxjs";
+import { FpsCounter } from "../utils/fps";
 
 export class Mapbox {
 	private map: Map | null = null;
 
 	private readonly $testing: Subject<boolean>;
+
+	private readonly $testingResult: Subject<number>;
+
+	private fps = new FpsCounter();
 
 	private readonly startPosition: { center: [number, number]; zoom: number; pitch: number; bearing: number } = {
 		center: [0, 0],
@@ -13,9 +18,10 @@ export class Mapbox {
 		bearing: 0,
 	};
 
-	constructor(options: { container: HTMLDivElement; subjects: { $testing: Subject<boolean> } }) {
+	constructor(options: { container: HTMLDivElement; subjects: { $testing: Subject<boolean>, $testingResult: Subject<number> } }) {
 		this.createMap(options.container);
 		this.$testing = options.subjects.$testing;
+		this.$testingResult = options.subjects.$testingResult;
 	}
 
 	private createMap(container: HTMLDivElement) {
@@ -56,6 +62,9 @@ export class Mapbox {
 			essential: true,
 		});
 		this.$testing.next(true);
+		this.fps.start();
+
+
 		for (let bearing = 0; bearing < 361; bearing += 10) {
 			this.map?.flyTo({ bearing, duration: 300, essential: true });
 			await new Promise<void>((res) => {
@@ -65,7 +74,13 @@ export class Mapbox {
 			});
 		}
 		this.$testing.next(false);
+		const results = this.fps.finish();
+		this.$testingResult.next(results);
 		this.enableInteraction();
+	}
+
+	public setZoomLevel(zoomLevel: number) {
+		this.startPosition.zoom = zoomLevel;
 	}
 
 	private enableInteraction() {

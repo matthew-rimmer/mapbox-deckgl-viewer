@@ -9,11 +9,14 @@ interface ModelSettingsProps {
 	$renderingSceneFinshed: ReplaySubjectReset<number>;
 	$modelStatsFinshed: ReplaySubject<Stats>;
 	showStats: boolean;
-	onAmountChange: (amount: number) => void;
 	onHeightChange: (height: number) => void;
 	onOrientationChange: (orientation: Orientation) => void;
-	onTestingClicked: () => void;
+	models: Record<string, File>;
+	zoomLevel: number;
+	onAmountChange: (id: string, amount: number) => void;
+	onTestingClicked: (singleModelTest: boolean, amount: number) => void;
 	onChangeModelClick: () => void;
+	onZoomLevelChange: (zoomLevel: number) => void;
 }
 
 export function ModelSettingsComponent({
@@ -21,18 +24,23 @@ export function ModelSettingsComponent({
 	$renderingSceneFinshed,
 	$modelStatsFinshed,
 	showStats,
+	models,
+	zoomLevel,
 	onAmountChange,
 	onHeightChange,
 	onOrientationChange,
 	onTestingClicked,
 	onChangeModelClick,
+	onZoomLevelChange,
 }: ModelSettingsProps) {
 	const [results, setResults] = useState<number | null>(null);
 	const [renderingTime, setRenderingTime] = useState<number | null>(null);
 	const [stats, setStats] = useState<Stats | null>(null);
 
+	const [singleModelTest, setSingleModelTest] = useState(false);
+	const [singleModelTestAmount, setSingleModelTestAmount] = useState<number>(0);
 	const [testing, setTesting] = useState(false);
-	const [amount, setAmount] = useState(1);
+	const [amount, setAmount] = useState<Record<string, number>>(createStartingAmount(models));
 
 	useEffect(() => {
 		const testingResultSub = $testingResult.subscribe((result) => {
@@ -55,15 +63,15 @@ export function ModelSettingsComponent({
 		};
 	}, []);
 
-	const handleAmountChanged = (amount: number) => {
-		const parsedAmount = Number.isNaN(amount) ? 0 : amount;
-		setAmount(parsedAmount);
-		onAmountChange(parsedAmount);
+	const handleAmountChanged = (id: string, newAmount: number) => {
+		const parsedAmount = Number.isNaN(newAmount) ? 0 : newAmount;
+		setAmount({ ...amount, [id]: parsedAmount });
+		onAmountChange(id, parsedAmount);
 	};
 
 	const handleTestingClicked = () => {
 		setTesting(true);
-		onTestingClicked();
+		onTestingClicked(singleModelTest, singleModelTestAmount);
 	};
 
 	const getPerformanceClassName = () => {
@@ -107,36 +115,22 @@ export function ModelSettingsComponent({
 						<div className={`model-setting-item ${getRenderingTimeClassName()}`}>
 							Rendering Time: <span>{renderingTime ? `${renderingTime.toFixed(2)} secs` : "No result"} </span>
 						</div>
-						<div className={`model-setting-item ${getPerformanceClassName()}`}>
-							Performance: <span>{results ? `${results.toFixed(2)} fps` : "No result"}</span>
-						</div>
 					</>
 				)}
-				<div className="model-setting-item">
-					Amount
-					<input
-						className="amount-input"
-						type="number"
-						value={amount ?? 0}
-						onChange={({ target }) => handleAmountChanged(Number.parseInt(target.value))}
-					/>
+				<div className={`model-setting-item ${getPerformanceClassName()}`}>
+					Performance: <span>{results ? `${results.toFixed(2)} fps` : "No result"}</span>
 				</div>
-				<div className="model-setting-item">
-					Height
-					<input
-						className="height-input"
-						type="number"
-						onChange={({ target }) => onHeightChange(Number.parseInt(target.value))}
-					/>
-				</div>
-				<div className="model-setting-item">
-					Orientation
-					<div>
-						<input type="number" onChange={({ target }) => onOrientationChange({ x: Number.parseInt(target.value) })} defaultValue={0} />
-						<input type="number" onChange={({ target }) => onOrientationChange({ y: Number.parseInt(target.value) })} defaultValue={0}/>
-						<input type="number" onChange={({ target }) => onOrientationChange({ z: Number.parseInt(target.value) })} defaultValue={90}/>
+				{Object.entries(models).map(([id, modelFile]) => (
+					<div className="model-setting-item" key={id}>
+						{modelFile.name} Amount
+						<input
+							className="amount-input"
+							type="number"
+							value={amount[id]}
+							onChange={({ target }) => handleAmountChanged(id, Number.parseInt(target.value))}
+						/>
 					</div>
-				</div>
+				))}
 				{showStats && (
 					<div className="model-setting-item model-stats">
 						{stats != null &&
@@ -149,6 +143,26 @@ export function ModelSettingsComponent({
 							})}
 					</div>
 				)}
+				<div className="model-setting-item">
+					Zoom level
+					<input
+						className="amount-input"
+						type="number"
+						value={zoomLevel}
+						onChange={({ target }) => onZoomLevelChange(Number.parseInt(target.value))}
+					/>
+				</div>
+				<div className="model-setting-item">
+					Single Model
+					<input type="checkbox" checked={singleModelTest} onChange={() => setSingleModelTest(!singleModelTest)} />
+					<input
+						disabled={testing || !singleModelTest}
+						className="amount-input"
+						type="number"
+						value={singleModelTestAmount}
+						onChange={({ target }) => setSingleModelTestAmount(Number.parseInt(target.value))}
+					/>
+				</div>
 				<div className="model-setting-item testing-button">
 					<button disabled={testing} onClick={handleTestingClicked}>
 						Start Testing
@@ -160,4 +174,12 @@ export function ModelSettingsComponent({
 			</div>
 		</div>
 	);
+}
+
+function createStartingAmount(models: Record<string, File>) {
+	const amount: Record<string, number> = {};
+	Object.keys(models).forEach((model) => {
+		amount[model] = 1;
+	});
+	return amount;
 }

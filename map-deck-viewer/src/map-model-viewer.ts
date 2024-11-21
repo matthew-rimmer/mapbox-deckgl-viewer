@@ -5,13 +5,19 @@ import type { EngineType, MapDeckViewOptions, MapDeckViewerSubjects, Orientation
 import type { Stats } from "./types/deckgl-types";
 import { Mapbox3d } from "./mapbox/mapbox3d";
 import { DeckGl } from "./deckgl/deckgl";
+import type { Base3d } from "./base3d/base3d";
+import { createCSV } from "./utils/csv";
 
-export class MapDeckView {
+export class MapModelViewer {
 	private readonly mapbox: Mapbox;
 
-	private map3d: Mapbox3d | null = null;
+	private map3d: Base3d | null = null;
 
 	private subjects: MapDeckViewerSubjects;
+
+	private models: Record<string, File> = {};
+
+	private results: Record<string, number> = {};
 
 	constructor(options: MapDeckViewOptions) {
 		if (options.mapboxAccessKey == null) {
@@ -41,8 +47,9 @@ export class MapDeckView {
 
 	}
 
-	public async addModel(model: File, image?: File) {
-		await this.map3d?.addLayer(model, image);
+	public async addModels(models: Record<string, File>, image?: File) {
+		this.models = models;
+		await this.map3d?.addLayers(models);
 	}
 
 
@@ -50,12 +57,42 @@ export class MapDeckView {
 		this.map3d?.removeLayer();
 	}
 
-	public startTesting() {
-		this.mapbox.startTesting();
+	public async startTesting(singleModelTest: boolean, modelAmount: number) {
+		if (!singleModelTest) {
+			this.mapbox.startTesting();
+			return;
+		}
+
+		this.results = {};
+
+		for (const [modelId, modelFile] of Object.entries(this.models)) {
+			await this.testSingleModel(modelAmount, modelId, modelFile);
+		}
+
+		createCSV(Object.entries(this.results), ["model name", "avg fps"], "Model testing results")
 	}
 
-	public changeModelAmount(amount: number) {
-		this.map3d?.changeModelAmount(amount);
+
+	private async testSingleModel(modelAmount: number, modelId: string, modelFile: File) {
+		this.removeModel();
+		await this.map3d?.addLayers({ [modelId]: modelFile });
+		this.changeModelAmount(modelId, modelAmount);
+		this.mapbox.startTesting();
+		return new Promise<void>((resolve) => {
+			const sub = this.subjects.$testingResult.subscribe((result) => {
+				this.results[modelId] = Number.parseFloat(result.toFixed(2));
+				sub.unsubscribe();
+				resolve();
+			});
+		});
+	}
+
+	public changeModelAmount(id: string, amount: number) {
+		this.map3d?.changeModelAmount(id, amount);
+	}
+
+	public setZoomLevel(zoomLevel: number) {
+		this.mapbox.setZoomLevel(zoomLevel);
 	}
 
 	public changeModelHeight(height: number) {

@@ -11,40 +11,58 @@ export class Mapbox3d extends Base3d {
         throw new Error("Method not implemented.");
     }
 
-    public override addLayer(modelFile: File, image?: File): Promise<void> {
-        if (image) {
-            throw new Error("Image replacement not supported in Mapbox");
-        }
-        console.log("Layer added using mapbox");
-
+    public override addLayers(models: Record<string, File>, image?: File): Promise<void> {
+        super.addLayers(models);
         const map = this.mapbox.getMap();
+        const coords = this.createCoordinates();
 
-        const objectURL = URL.createObjectURL(modelFile);
+        const modelsWithId = Object.entries(models);
 
-        // @ts-ignore
-        map.addModel("model", objectURL);
+        for (let i = 0; i < Object.keys(models).length; i++) {
 
-        const source: FeatureCollection = {
-            type: "FeatureCollection",
-            features: [
-                { type: "Feature", geometry: { coordinates: [0, 0], type: "Point" }, properties: {} }
-            ]
+            const modelWithId = modelsWithId[i];
+
+            if (modelWithId == null) {
+                throw new Error();
+            }
+
+            const [modelId, model] = modelWithId;
+
+            if (model == null) {
+                throw new Error();
+            }
+
+            // @ts-ignore
+            map.addModel(modelId, URL.createObjectURL(model));
+
+            const coordinates = coords[i];
+
+            if (coordinates == null) {
+                throw new Error();
+            }
+
+            const source: FeatureCollection = {
+                type: "FeatureCollection",
+                features: [
+                    { type: "Feature", geometry: { coordinates, type: "Point" }, properties: {} }
+                ]
+            }
+
+            map.addSource(modelId, { type: "geojson", data: source });
+
+            const modelLayer = {
+                id: modelId,
+                type: "model",
+                layout: {
+                    "model-id": modelId
+                },
+                source: modelId
+            }
+
+            // @ts-ignore
+            map.addLayer(modelLayer);
+
         }
-
-        map.addSource("model-source", { type: "geojson", data: source });
-
-        const modelLayer = {
-            id: "model-layer",
-            type: "model",
-            layout: {
-                "model-id": "model"
-            },
-            source: "model-source"
-        }
-
-        // @ts-ignore
-        map.addLayer(modelLayer);
-
 
         return Promise.resolve();
     }
@@ -52,30 +70,37 @@ export class Mapbox3d extends Base3d {
 
     public override removeLayer(): void {
         const map = this.mapbox.getMap();
-        map.removeLayer("model-layer");
-        map.removeSource("model-source");
-
+        Object.keys(this.modelsAmount).forEach((modelId) => {
+            map.removeLayer(modelId);
+            map.removeSource(modelId);
+        });
     }
 
-    public override changeModelAmount(amount: number): void {
+    public override changeModelAmount(id: string, amount: number): void {
+        super.changeModelAmount(id, amount);
         const map = this.mapbox.getMap();
-        const source = map.getSource("model-source");
+        let totalCoordsUsed = 0;
+        const coords = this.createCoordinates();
+        Object.entries(this.modelsAmount).forEach(([modelId, modelAmount]) => {
+            const source = map.getSource(modelId);
 
-        if (source?.type === "geojson") {
+            if (source?.type === "geojson") {
 
-            const features: Feature<Point>[] = this.createCoordinates(amount).map((coord) => ({
-                type: "Feature", geometry: { coordinates: [coord[0], coord[1]], type: "Point" }, properties: {}
-            }));
+                const modelCoords = coords.slice(totalCoordsUsed, modelAmount + totalCoordsUsed);
 
-            const updatedData: FeatureCollection = {
-                type: "FeatureCollection",
-                features
+                const features: Feature<Point>[] = modelCoords.map((coord) => ({
+                    type: "Feature", geometry: { coordinates: [coord[0], coord[1]], type: "Point" }, properties: {}
+                }));
+
+                totalCoordsUsed += features.length;
+
+                const updatedData: FeatureCollection = {
+                    type: "FeatureCollection",
+                    features
+                }
+
+                source.setData(updatedData);
             }
-
-            source.setData(updatedData);
-        }
+        });
     }
-
-
-
 }
